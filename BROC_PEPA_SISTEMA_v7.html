@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Custodia Detenido – BROC PEPA</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0 }
+header { background:#1f2a44; color:#fff; padding:20px; text-align:center }
+.container { max-width:900px; margin:auto; background:#fff; padding:25px }
+.controls { display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap }
+button { padding:6px 10px; cursor:pointer }
+.memoria { border:1px solid #000; padding:15px; margin-bottom:20px }
+
+.linea {
+  display:flex;
+  align-items:center;
+  margin-top:10px;
+  font-family: monospace;
+}
+
+.fecha {
+  width:120px;
+  font-weight:bold;
+}
+
+.separador {
+  border-left:2px solid #000;
+  height:18px;
+  margin:0 12px;
+}
+
+.turnos {
+  flex:1;
+}
+
+.saved { margin-top:30px; border-top:1px solid #000; padding-top:15px }
+.saved ul { list-style:none; padding:0 }
+.saved li { margin-bottom:6px }
+
+@media print {
+  header,.controls,.saved { display:none }
+}
+</style>
+</head>
+<body>
+
+<header>
+<h2>INSPECCIÓN 6ta ZONA</h2>
+<h3>MEMORANDUM</h3>
+</header>
+
+<div class="container" id="contenido">
+
+<div class="controls">
+<select id="mes">
+<option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+<option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+<option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+<option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+</select>
+<input type="number" id="anio" value="2026">
+<button onclick="generar()">Generar</button>
+<button onclick="guardar()">Guardar memorándum</button>
+<button onclick="window.print()">Imprimir / PDF</button>
+</div>
+
+<div class="memoria">
+SEÑOR JEFE DE SUB COMISARÍA 7°, SUB COMISARÍA 9°, SUB COMISARÍA 10°, 
+SUB COMISARÍA 11°, SUB COMISARÍA 12°.<br><br>
+
+Atento a lo dispuesto por la superioridad se designa el siguiente personal.<br><br>
+
+<b>CUSTODIA DETENIDO:</b> BROC PEPA GERMAN, internado en Clínica Avenida, 
+sito calle Mitre 2222, Rosario. (A cargo Inspección GTA).<br><br>
+
+<b>DURANTE LAS 24 HORAS</b><br>
+01 efectivo por turno<br><br>
+
+<b>HORARIO:</b><br>
+DE 08:00 A 20:00 HORAS – DE 20:00 A 08:00 HORAS
+</div>
+
+<h3 id="titulo"></h3>
+
+<div id="cronograma"></div>
+
+<div class="saved">
+<h3>Memorándums guardados</h3>
+<ul id="lista"></ul>
+</div>
+
+</div>
+
+<script>
+const dependencias = [
+ "SUB CRIA 7","SUB CRIA 9","SUB CRIA 10","SUB CRIA 11","SUB CRIA 12"
+];
+const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+function generar(){
+ const mes = +mesSelect.value;
+ const anio = +anioInput.value;
+ cronograma.innerHTML = "";
+
+ let idx = parseInt(localStorage.getItem("idx_broc")) || 0;
+ const total = new Date(anio,mes+1,0).getDate();
+ const nombreMes = new Date(anio,mes).toLocaleString("es",{month:"long"}).toUpperCase();
+ titulo.innerText = `MES DE ${nombreMes} ${anio}`;
+
+ for(let d=1; d<=total; d++){
+   const f = new Date(anio,mes,d);
+   const t1 = dependencias[idx % dependencias.length];
+   const t2 = dependencias[(idx + 1) % dependencias.length];
+   idx = (idx + 2) % dependencias.length;
+
+   cronograma.innerHTML += `
+   <div class="linea">
+     <div class="fecha">${dias[f.getDay()].toUpperCase()} ${String(d).padStart(2,"0")}</div>
+     <div class="separador"></div>
+     <div class="turnos">08 A 20 ${t1} --------- 20 A 08 ${t2}</div>
+   </div>`;
+ }
+
+ localStorage.setItem("idx_broc", idx);
+}
+
+function guardar(){
+ const key = titulo.innerText;
+ localStorage.setItem(key, document.getElementById("contenido").innerHTML);
+ cargarLista();
+ alert("Memorándum guardado");
+}
+
+function cargarLista(){
+ lista.innerHTML = "";
+ Object.keys(localStorage).filter(k=>k.startsWith("MES DE")).forEach(k=>{
+   lista.innerHTML += `<li>${k}
+     <button onclick="ver('${k}')">Ver</button>
+     <button onclick="borrar('${k}')">Eliminar</button>
+   </li>`;
+ });
+}
+
+function ver(k){
+ document.getElementById("contenido").innerHTML = localStorage.getItem(k);
+}
+
+function borrar(k){
+ if(confirm("¿Eliminar este memorándum?")){
+   localStorage.removeItem(k);
+   cargarLista();
+ }
+}
+
+const mesSelect = document.getElementById("mes");
+const anioInput = document.getElementById("anio");
+const cronograma = document.getElementById("cronograma");
+const titulo = document.getElementById("titulo");
+const lista = document.getElementById("lista");
+
+generar();
+cargarLista();
+</script>
+
+</body>
+</html>
