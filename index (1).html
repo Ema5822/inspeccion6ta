@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inspección 6ta</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      min-height: 100vh;
+    }
+    header {
+      padding: 2.5rem 1rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 3rem;
+      margin: 0;
+      letter-spacing: 2px;
+    }
+    header p {
+      margin-top: 0.5rem;
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(6px);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 35px rgba(0,0,0,0.35);
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.4rem;
+    }
+    .card p {
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+    .card a {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      background: #ffffff;
+      color: #1e3c72;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .card a:hover {
+      background: #e0e6f0;
+      color: #162c54;
+    }
+    footer {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Inspección 6ta</h1>
+    <p>Página de inicio</p>
+  </header>
+
+  <main>
+    <section class="cards">
+      <div class="card">
+        <h2>Tránsito</h2>
+        <p>Acceso al sistema de tránsito</p>
+        <a href="transito.html">Abrir</a>
+      </div>
+
+      <div class="card">
+        <h2>Controladores</h2>
+        <p>Acceso al sistema de controladores</p>
+        <a href="controladores.html">Abrir</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 · Inspección 6ta
+  </footer>
+</body>
+</html>
