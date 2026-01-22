@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Controlador de Crías – Inspección 6ta Zona</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; }
+header { background:#1f2a44; color:#fff; padding:20px; text-align:center }
+.container { max-width:1100px; margin:auto; background:#fff; padding:25px }
+.controls { display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap }
+button { padding:6px 10px; cursor:pointer }
+table { width:100%; border-collapse:collapse; margin-top:15px }
+th,td { border:1px solid #000; padding:6px }
+th { background:#e6e6e6 }
+.memoria { border:1px solid #000; padding:12px; margin-bottom:20px }
+.saved { margin-top:30px; border-top:2px solid #ccc; padding-top:20px }
+.saved ul { list-style:none; padding:0 }
+.saved li { padding:8px; margin:5px 0; background:#f9f9f9; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center }
+.saved li button { margin-left:5px; padding:4px 8px }
+@media print {
+  header,.controls,.saved { display:none }
+}
+</style>
+</head>
+<body>
+
+<header>
+<h2>CONTROLADOR DE COMISARÍAS</h2>
+<h3>Inspección 6ta Zona</h3>
+</header>
+
+<div class="container" id="contenido">
+
+<div class="controls">
+<select id="mes">
+<option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+<option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+<option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+<option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+</select>
+<input type="number" id="anio" value="2026">
+<button onclick="generar()">Generar</button>
+<button onclick="guardar()">Guardar</button>
+<button onclick="exportarWord()">Exportar a Word</button>
+<button onclick="window.print()">Imprimir / PDF</button>
+</div>
+
+<div class="memoria">
+<b>MEMORANDUM</b><br><br>
+SEÑORES JEFES DE: C.R.A.E.A.S., CRIA 27°, SUB CRIA 7°, SUB CRIA 9°, 
+SUB CRIA 10°, SUB CRIA 11°, SUB CRIA 12°.<br><br>
+Horario: 22:00 a 06:00 hs.
+</div>
+
+<h3 id="titulo"></h3>
+
+<table>
+<thead>
+<tr><th>Día</th><th>Fecha</th><th>Dependencia</th></tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+
+<div class="saved">
+<h3>Memorándums guardados</h3>
+<ul id="lista"></ul>
+</div>
+
+</div>
+
+<script>
+const dependencias = [
+ "CRIA 27","CREAS","SUB CRIA 7","SUB CRIA 9",
+ "SUB CRIA 10","SUB CRIA 11","SUB CRIA 12"
+];
+const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+let mesSelect = document.getElementById("mes");
+let anioInput = document.getElementById("anio");
+let tabla = document.getElementById("tabla");
+let titulo = document.getElementById("titulo");
+let lista = document.getElementById("lista");
+
+function obtenerAsignacionSemanal(numSemana, diasUsadosPorDependencia, dependenciaUltimoDiaAnterior, diasTrabajadosPorDependencia, diaInicioSemana){
+  // Asignación que rota cada semana - cada dependencia tiene un día único
+  // Lunes=1, Martes=2, Miércoles=3, Jueves=4, Viernes=5, Sábado=6, Domingo=0
+  // Hay 7 dependencias que se distribuyen en 7 días sin repeticiones
+  // En todo el mes, ninguna dependencia repite el mismo día de la semana
+  // CRIA 27 y CREAS nunca trabajan viernes, sábado o domingo
+  // El domingo no puede ser la misma dependencia que tuvo el sábado de la semana anterior
+  // Cada dependencia debe tener mínimo 2 días de descanso entre asignaciones
+  
+  // Obtener índice de rotación inicial desde localStorage
+  let idx = parseInt(localStorage.getItem("rotacion_idx")) || 0;
+  
+  // Dependencias que pueden trabajar cualquier día (SUB CRIA)
+  const dependenciasCompletas = dependencias.filter(dep => dep !== "CRIA 27" && dep !== "CREAS");
+  
+  const asignacion = {};
+  const todosLosDias = [1, 2, 3, 4, 5, 6, 0]; // Lunes a Domingo
+  const diasLaborables = [1, 2, 3, 4]; // Lunes a Jueves
+  const diasFinSemana = [5, 6, 0]; // Viernes, Sábado, Domingo
+  
+  // Inicializar días usados por dependencia si no existe
+  if(!diasUsadosPorDependencia){
+    diasUsadosPorDependencia = {};
+    dependencias.forEach(dep => {
+      diasUsadosPorDependencia[dep] = new Set();
+    });
+  }
+  
+  // Inicializar días trabajados por dependencia si no existe
+  if(!diasTrabajadosPorDependencia){
+    diasTrabajadosPorDependencia = {};
+    dependencias.forEach(dep => {
+      diasTrabajadosPorDependencia[dep] = [];
+    });
+  }
+  
+  // Función para verificar si una dependencia puede trabajar en un día específico
+  // Considerando el mínimo de 2 días de descanso
+  function puedeTrabajarEnDia(dep, diaSemana, diaDelMes){
+    // Verificar que no haya trabajado en los 2 días anteriores
+    if(diasTrabajadosPorDependencia[dep] && diasTrabajadosPorDependencia[dep].length > 0){
+      const diasTrabajados = diasTrabajadosPorDependencia[dep];
+      // Verificar los últimos días trabajados
+      for(let i = diasTrabajados.length - 1; i >= 0; i--){
+        const diaTrabajado = diasTrabajados[i];
+        const diasDiferencia = diaDelMes - diaTrabajado;
+        // Si trabajó hace menos de 3 días (es decir, menos de 2 días de descanso), no puede trabajar
+        // Ejemplo: si trabajó día 1, no puede trabajar día 2 o 3 (necesita descansar día 2 y 3)
+        if(diasDiferencia > 0 && diasDiferencia < 3){
+          return false;
+        }
+        // Si ya verificamos días más antiguos que 3 días, no necesitamos seguir
+        if(diasDiferencia >= 3){
+          break;
+        }
+      }
+    }
+    return true;
+  }
+  
+  // Rotar todas las dependencias según el número de semana
+  const desplazamiento = numSemana % 7;
+  
+  // Crear lista de dependencias rotada
+  const listaRotada = [];
+  for(let i = 0; i < dependencias.length; i++){
+    const posicion = (idx + desplazamiento + i) % dependencias.length;
+    listaRotada.push(dependencias[posicion]);
+  }
+  
+  // Asignar cada dependencia a un día único
+  // Asegurándose de que no repita días que ya tuvo en semanas anteriores
+  
+  const dependenciasAsignadas = new Set();
+  const diasOcupados = new Set();
+  
+  // Paso 1: Asignar CRIA 27 y CREAS a días laborables que no hayan usado antes
+  for(let i = 0; i < listaRotada.length; i++){
+    const dep = listaRotada[i];
+    if((dep === "CRIA 27" || dep === "CREAS") && !dependenciasAsignadas.has(dep)){
+      // Buscar exhaustivamente un día laborable que esta dependencia no haya usado antes
+      let asignado = false;
+      // Primero intentar con el orden rotado
+      for(let j = 0; j < diasLaborables.length; j++){
+        const dia = diasLaborables[(desplazamiento + j) % 4];
+        // Calcular el día del mes correspondiente (dia es 1-4, día 1=lunes)
+        const diaDelMes = diaInicioSemana + (dia - 1);
+        if(!diasOcupados.has(dia) && !diasUsadosPorDependencia[dep].has(dia) && puedeTrabajarEnDia(dep, dia, diaDelMes)){
+          asignacion[dia] = dep;
+          dependenciasAsignadas.add(dep);
+          diasOcupados.add(dia);
+          diasUsadosPorDependencia[dep].add(dia);
+          asignado = true;
+          break;
+        }
+      }
+      // Si no encontró con el orden rotado, buscar en todos los días laborables
+      if(!asignado){
+        for(let j = 0; j < diasLaborables.length; j++){
+          const dia = diasLaborables[j];
+          const diaDelMes = diaInicioSemana + (dia - 1);
+          if(!diasOcupados.has(dia) && !diasUsadosPorDependencia[dep].has(dia) && puedeTrabajarEnDia(dep, dia, diaDelMes)){
+            asignacion[dia] = dep;
+            dependenciasAsignadas.add(dep);
+            diasOcupados.add(dia);
+            diasUsadosPorDependencia[dep].add(dia);
+            asignado = true;
+            break;
+          }
+        }
+      }
+      // Si aún no encontró, significa que ya usó todos los días laborables disponibles
+      // En este caso, no asignar (no debería pasar en un mes normal)
+    }
+  }
+  
+  // Paso 2: Asignar SUB CRIA a los días restantes, evitando días ya usados
+  // IMPORTANTE: Si hay una dependencia del último día anterior, evitar asignarla al domingo
+  for(let i = 0; i < listaRotada.length; i++){
+    const dep = listaRotada[i];
+    if(!dependenciasAsignadas.has(dep)){
+      // Buscar exhaustivamente cualquier día disponible que esta dependencia no haya usado antes
+      let asignado = false;
+      // Primero intentar con el orden rotado
+      for(let j = 0; j < todosLosDias.length; j++){
+        const dia = todosLosDias[(desplazamiento + j) % 7];
+        // Calcular el día del mes correspondiente
+        // dia: 1=Lunes, 2=Martes, ..., 6=Sábado, 0=Domingo
+        let diaDelMes;
+        if(dia === 0){
+          // Domingo es el día 7 de la semana
+          diaDelMes = diaInicioSemana + 6;
+        } else {
+          diaDelMes = diaInicioSemana + (dia - 1);
+        }
+        // Verificar restricciones:
+        // 1. El día no debe estar ocupado
+        // 2. La dependencia no debe haber usado este día antes
+        // 3. Si es domingo (0) y esta dependencia fue la del sábado anterior, evitar
+        // 4. Debe tener mínimo 2 días de descanso desde el último día trabajado
+        const esDomingoYRepite = (dia === 0 && dependenciaUltimoDiaAnterior && dep === dependenciaUltimoDiaAnterior);
+        
+        if(!diasOcupados.has(dia) && !diasUsadosPorDependencia[dep].has(dia) && !esDomingoYRepite && puedeTrabajarEnDia(dep, dia, diaDelMes)){
+          asignacion[dia] = dep;
+          dependenciasAsignadas.add(dep);
+          diasOcupados.add(dia);
+          diasUsadosPorDependencia[dep].add(dia);
+          asignado = true;
+          break;
+        }
+      }
+      // Si no encontró con el orden rotado, buscar en todos los días sin importar el orden
+      if(!asignado){
+        for(let j = 0; j < todosLosDias.length; j++){
+          const dia = todosLosDias[j];
+          let diaDelMes;
+          if(dia === 0){
+            diaDelMes = diaInicioSemana + 6;
+          } else {
+            diaDelMes = diaInicioSemana + (dia - 1);
+          }
+          const esDomingoYRepite = (dia === 0 && dependenciaUltimoDiaAnterior && dep === dependenciaUltimoDiaAnterior);
+          // Verificar que no haya usado este día antes Y que no esté ocupado Y que tenga descanso suficiente
+          if(!diasOcupados.has(dia) && !diasUsadosPorDependencia[dep].has(dia) && !esDomingoYRepite && puedeTrabajarEnDia(dep, dia, diaDelMes)){
+            asignacion[dia] = dep;
+            dependenciasAsignadas.add(dep);
+            diasOcupados.add(dia);
+            diasUsadosPorDependencia[dep].add(dia);
+            asignado = true;
+            break;
+          }
+        }
+      }
+      // Si aún no encontró, significa que ya usó todos los días disponibles
+      // En este caso, no asignar (no debería pasar en un mes normal con 7 dependencias y 7 días)
+    }
+  }
+  
+  return asignacion;
+}
+
+function generar(){
+  // Asegurar que tenemos las referencias correctas
+  if(!mesSelect) mesSelect = document.getElementById("mes");
+  if(!anioInput) anioInput = document.getElementById("anio");
+  if(!tabla) tabla = document.getElementById("tabla");
+  if(!titulo) titulo = document.getElementById("titulo");
+  
+  const mes = +mesSelect.value;
+  const anio = +anioInput.value;
+  tabla.innerHTML = "";
+
+  let idx = parseInt(localStorage.getItem("rotacion_idx")) || 0;
+  const totalDias = new Date(anio, mes + 1, 0).getDate();
+
+  const nombreMes = new Date(anio, mes)
+    .toLocaleString("es", { month: "long" })
+    .toUpperCase();
+
+  titulo.innerText = `MES DE ${nombreMes} ${anio}`;
+
+  // Calcular el primer día del mes para determinar la semana inicial
+  const primerDia = new Date(anio, mes, 1);
+  const primerDiaSemana = primerDia.getDay();
+  
+  // Rastrear qué días de la semana ha usado cada dependencia en el mes
+  const diasUsadosPorDependencia = {};
+  dependencias.forEach(dep => {
+    diasUsadosPorDependencia[dep] = new Set();
+  });
+  
+  // Rastrear qué días del mes ha trabajado cada dependencia (para verificar descanso de 2 días)
+  const diasTrabajadosPorDependencia = {};
+  dependencias.forEach(dep => {
+    diasTrabajadosPorDependencia[dep] = [];
+  });
+  
+  // Rastrear la dependencia del último día de la semana anterior (sábado)
+  let dependenciaUltimoDiaAnterior = null;
+  
+  // Calcular número de semana para cada día
+  let numSemana = 0;
+  let ultimoLunes = 0;
+  let semanaActual = -1;
+  let diaInicioSemanaActual = 1;
+
+  // Generar tabla día por día
+  for(let d = 1; d <= totalDias; d++){
+    const fecha = new Date(anio, mes, d);
+    const dayOfWeek = fecha.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
+    
+    // Calcular número de semana: si es lunes o es el primer día del mes
+    if(dayOfWeek === 1){
+      // Es lunes, nueva semana
+      numSemana = Math.floor((d - 1) / 7);
+      diaInicioSemanaActual = d;
+    } else if(d === 1){
+      // Primer día del mes que no es lunes
+      numSemana = 0;
+      // Encontrar el lunes de esta semana (puede ser del mes anterior, pero usamos 1 como referencia)
+      if(dayOfWeek === 0){
+        // Si es domingo, el lunes sería el día 2
+        diaInicioSemanaActual = 2;
+      } else {
+        // Para otros días, calcular hacia atrás
+        diaInicioSemanaActual = 1 - (dayOfWeek - 1);
+        if(diaInicioSemanaActual < 1) diaInicioSemanaActual = 1;
+      }
+    } else if(d > 1 && dayOfWeek === 0 && fecha.getDate() === d){
+      // Si es domingo y no hemos actualizado la semana, calcularla
+      numSemana = Math.floor((d - 1) / 7);
+      // Encontrar el lunes de esta semana
+      diaInicioSemanaActual = d - 6;
+    }
+    
+    // Si es una nueva semana, obtener la asignación
+    if(numSemana !== semanaActual){
+      semanaActual = numSemana;
+      // Obtener asignación para esta semana, pasando los días ya usados, la dependencia del último día anterior y los días trabajados
+      const asignacionSemanal = obtenerAsignacionSemanal(numSemana, diasUsadosPorDependencia, dependenciaUltimoDiaAnterior, diasTrabajadosPorDependencia, diaInicioSemanaActual);
+      
+      // Guardar la asignación de esta semana
+      window.asignacionActual = asignacionSemanal;
+      
+      // Resetear para la próxima semana (se actualizará cuando lleguemos al sábado)
+      dependenciaUltimoDiaAnterior = null;
+    }
+    
+    const asignada = window.asignacionActual[dayOfWeek] || "SIN ASIGNAR";
+    
+    // Registrar el día trabajado para verificar descanso en futuras asignaciones
+    if(asignada !== "SIN ASIGNAR"){
+      diasTrabajadosPorDependencia[asignada].push(d);
+      // Mantener solo los últimos días trabajados (para optimización)
+      if(diasTrabajadosPorDependencia[asignada].length > 10){
+        diasTrabajadosPorDependencia[asignada] = diasTrabajadosPorDependencia[asignada].slice(-10);
+      }
+    }
+    
+    // Si es sábado (último día de la semana), guardar la dependencia para la próxima semana
+    if(dayOfWeek === 6){
+      dependenciaUltimoDiaAnterior = asignada;
+    }
+    
+    tabla.innerHTML += `
+      <tr>
+        <td>${dias[dayOfWeek]}</td>
+        <td>${String(d).padStart(2,"0")}</td>
+        <td>${asignada}</td>
+      </tr>`;
+  }
+  
+  // Actualizar índice para continuidad entre meses
+  const semanasEnMes = Math.ceil(totalDias / 7);
+  idx = (idx + semanasEnMes) % dependencias.length;
+  localStorage.setItem("rotacion_idx", idx);
+}
+
+function guardar(){
+  // Asegurar que tenemos la referencia correcta
+  if(!titulo) titulo = document.getElementById("titulo");
+  
+  const key = titulo ? titulo.innerText : "";
+  if(!key || key.trim() === ""){
+    alert("Primero debe generar un memorándum");
+    return;
+  }
+  
+  // Guardar el contenido completo del contenedor
+  const contenido = document.getElementById("contenido").innerHTML;
+  localStorage.setItem(key, contenido);
+  cargarLista();
+  alert("Memorándum guardado correctamente");
+}
+
+function cargarLista(){
+  // Asegurar que tenemos la referencia correcta
+  if(!lista) lista = document.getElementById("lista");
+  if(!lista) return;
+  
+  lista.innerHTML = "";
+  
+  // Obtener todas las claves del localStorage que son memorándums
+  // Excluir claves del sistema como "rotacion_idx"
+  const memorandums = [];
+  for(let i = 0; i < localStorage.length; i++){
+    const key = localStorage.key(i);
+    if(key && key !== "rotacion_idx" && key.startsWith("MES")){
+      memorandums.push(key);
+    }
+  }
+  
+  // Ordenar por fecha (más recientes primero)
+  memorandums.sort().reverse();
+  
+  if(memorandums.length === 0){
+    lista.innerHTML = "<li style='padding:10px; color:#666;'>No hay memorándums guardados</li>";
+    return;
+  }
+  
+  memorandums.forEach(k=>{
+    const li = document.createElement("li");
+    // Escapar comillas para evitar problemas con onclick
+    const keyEscaped = k.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+    li.innerHTML = `
+      <span style="flex:1; font-weight:bold;">${k}</span>
+      <button onclick="ver('${keyEscaped}')">Ver</button>
+      <button onclick="borrar('${keyEscaped}')" style="background:#dc3545; color:white;">Borrar</button>
+    `;
+    lista.appendChild(li);
+  });
+}
+
+function ver(k){
+  const contenidoGuardado = localStorage.getItem(k);
+  if(!contenidoGuardado){
+    alert("Memorándum no encontrado");
+    return;
+  }
+  
+  // Restaurar el contenido guardado
+  document.getElementById("contenido").innerHTML = contenidoGuardado;
+  
+  // Actualizar referencias después de restaurar
+  mesSelect = document.getElementById("mes");
+  anioInput = document.getElementById("anio");
+  tabla = document.getElementById("tabla");
+  titulo = document.getElementById("titulo");
+  lista = document.getElementById("lista");
+  
+  // Recargar la lista de guardados
+  cargarLista();
+  
+  alert("Memorándum cargado correctamente");
+}
+
+function borrar(k){
+  if(confirm(`¿Está seguro de eliminar el memorándum "${k}"?`)){
+    localStorage.removeItem(k);
+    cargarLista();
+    alert("Memorándum eliminado");
+  }
+}
+
+function exportarWord(){
+  // Asegurar que tenemos la referencia correcta
+  if(!titulo) titulo = document.getElementById("titulo");
+  
+  const contenido = document.getElementById("contenido").innerHTML;
+  const blob = new Blob([`
+  <html><head><meta charset='UTF-8'></head><body>${contenido}</body></html>
+  `], { type: "application/msword" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (titulo ? titulo.innerText : "memorandum") + ".doc";
+  a.click();
+}
+
+generar();
+cargarLista();
+</script>
+
+</body>
+</html>
