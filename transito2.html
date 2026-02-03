@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generador de Servicios – Arroyo Seco</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f8; padding:20px }
+    h1 { color:#1f2937 }
+    button { padding:10px 16px; font-size:15px; cursor:pointer; margin:5px 0 }
+    .box { background:#fff; padding:15px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.1); margin-top:15px }
+    pre { white-space:pre-wrap }
+    .semana { border-bottom:1px solid #ccc; margin-bottom:15px; padding-bottom:15px }
+  </style>
+</head>
+<body>
+
+<h1>📋 Generador semanal de servicios</h1>
+<p>Funciona 100% local. El historial queda guardado aunque cierres el navegador.</p>
+
+<label>📅 Fecha sábado:
+  <input type="date" id="fechaSabado">
+</label><br><br>
+
+<button onclick="generarServicio()">Generar servicio semanal</button>
+<button onclick="limpiarTodo()">Limpiar TODO</button>
+
+<div class="box">
+  <pre id="resultado"></pre>
+</div>
+
+<div class="box">
+  <h3>🗂 Historial de semanas</h3>
+  <div id="historial"></div>
+</div>
+
+<script>
+// ===============================
+// CONFIGURACIÓN
+// ===============================
+const subCrias = [7, 9, 10, 11, 12];
+let semana = 0;
+let historial = [];
+
+// ===============================
+// CARGA LOCAL
+// ===============================
+if (localStorage.getItem('historialServicios')) {
+  historial = JSON.parse(localStorage.getItem('historialServicios'));
+}
+if (localStorage.getItem('semanaServicios')) {
+  semana = parseInt(localStorage.getItem('semanaServicios'));
+}
+
+renderHistorial();
+
+// ===============================
+// FUNCIÓN PRINCIPAL
+// ===============================
+function generarServicio() {
+  const fechaInput = document.getElementById('fechaSabado').value;
+  if (!fechaInput) {
+    alert('Seleccioná un día sábado.');
+    return;
+  }
+
+  // Evitar repetir semana
+  if (historial.some(h => h.fecha === fechaInput)) {
+    alert('⚠ Esta semana ya fue creada.');
+    return;
+  }
+
+  const f = new Date(fechaInput + 'T00:00:00');
+  if (f.getDay() !== 6) {
+    alert('La fecha seleccionada no es sábado.');
+    return;
+  }
+
+  const opciones = { day:'2-digit', month:'2-digit', year:'numeric' };
+  const sabadoTxt = f.toLocaleDateString('es-AR', opciones);
+  const domingo = new Date(f);
+  domingo.setDate(domingo.getDate() + 1);
+  const domingoTxt = domingo.toLocaleDateString('es-AR', opciones);
+
+  const rotada = subCrias.slice(semana).concat(subCrias.slice(0, semana));
+
+  const texto = `⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+SERVICIO CUSTODIA DE INSPECTORES DE TRÁNSITO Y GUM EN ARROYO SECO
+Fecha de inicio: ${sabadoTxt}
+Jurisdicción de Comisaría 27
+Presentación calle Libertad y Don Orione – A. Seco (S.P.A.)
+
+📌 Día SÁBADO (${sabadoTxt}) – 01 a 07 hs
+A CARGO DEL SERVICIO: Controlador nocturno
+Dependencia designada:
+Cría 27 – 01 efectivo
+Sub Cría ${rotada[0]} – 01 efectivo
+
+📌 Día DOMINGO (${domingoTxt}) – 01 a 07 hs
+A CARGO DEL SERVICIO: Controlador nocturno
+Dependencia designada:
+Sub Cría ${rotada[1]} – 01 efectivo
+Sub Cría ${rotada[2]} – 01 efectivo
+
+📌 Día DOMINGO (${domingoTxt}) – 20 a 02 hs
+A CARGO DEL SERVICIO: Controlador nocturno
+Dependencia designada:
+CREAS – 01 efectivo
+Sub Cría ${rotada[3]} – 01 efectivo
+
+➡ Descansa esta semana: Sub Cría ${rotada[4]}
+⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠`;
+
+  document.getElementById('resultado').textContent = texto;
+
+  historial.push({ fecha: fechaInput, texto });
+  localStorage.setItem('historialServicios', JSON.stringify(historial));
+
+  semana = (semana + 1) % subCrias.length;
+  localStorage.setItem('semanaServicios', semana);
+
+  renderHistorial();
+}
+
+// ===============================
+// HISTORIAL
+// ===============================
+function renderHistorial() {
+  const cont = document.getElementById('historial');
+  cont.innerHTML = '';
+
+  historial.forEach((h, i) => {
+    const div = document.createElement('div');
+    div.className = 'semana';
+    div.innerHTML = `
+      <strong>Semana ${i + 1} – ${h.fecha}</strong><br>
+      <button onclick="eliminarSemana(${i})">🗑 Eliminar</button>
+      <pre>${h.texto}</pre>
+    `;
+    cont.appendChild(div);
+  });
+}
+
+function eliminarSemana(i) {
+  if (!confirm('¿Eliminar esta semana?')) return;
+  historial.splice(i, 1);
+  localStorage.setItem('historialServicios', JSON.stringify(historial));
+  renderHistorial();
+}
+
+function limpiarTodo() {
+  if (!confirm('¿Borrar TODO el historial?')) return;
+  historial = [];
+  semana = 0;
+  localStorage.clear();
+  document.getElementById('resultado').textContent = '';
+  renderHistorial();
+}
+</script>
+
+</body>
+</html>
+
+</html>
