@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rotación de Dependencias - Memorándum</title>
+  <style>
+    :root {
+      --ink: #111;
+      --muted: #666;
+      --line: #222;
+      --bg: #f1f3f5;
+      --paper: #fff;
+      --accent: #0b57d0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+    .panel, .paper-wrap {
+      background: var(--paper);
+      border: 1px solid #d6d9de;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.06);
+    }
+    .panel {
+      padding: 18px;
+      position: sticky;
+      top: 18px;
+      align-self: start;
+    }
+    .panel h1 {
+      font-size: 20px;
+      margin: 0 0 6px;
+    }
+    .panel p {
+      color: var(--muted);
+      margin: 0 0 16px;
+      line-height: 1.4;
+      font-size: 14px;
+    }
+    label {
+      display: block;
+      margin: 10px 0 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #c9ced6;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+    .btns {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+    button.secondary { background: #495057; }
+    button.light { background: #e9ecef; color: #111; }
+    button.danger { background: #c92a2a; }
+    .saved {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .saved-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .saved-row select { flex: 1; }
+    .note {
+      margin-top: 14px;
+      font-size: 12.5px;
+      color: #555;
+      line-height: 1.45;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .paper-wrap { padding: 18px; overflow: auto; }
+    .paper {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: var(--paper);
+      color: #111;
+      padding: 16mm 14mm 18mm;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+      border: 1px solid #e7e7e7;
+    }
+    .memo-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .memo-title {
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: .2px;
+    }
+    .memo-number {
+      min-width: 115px;
+      text-align: right;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .line-fill {
+      display: inline-block;
+      min-width: 44px;
+      border-bottom: 1px solid #111;
+      text-align: center;
+      line-height: 1.1;
+    }
+    .to-block, .body-text, .footer-note {
+      font-size: 14px;
+      line-height: 1.55;
+      text-align: justify;
+    }
+    .to-block { margin-bottom: 10px; }
+    .month-box {
+      margin: 18px 0 14px;
+      text-align: center;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .month-box .m1 { font-size: 14px; }
+    .month-box .m2 { font-size: 26px; letter-spacing: .8px; }
+    .month-box .m3 { font-size: 22px; }
+    .section-head {
+      margin: 12px 0 10px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 13.5px;
+    }
+    th, td {
+      border: 1px solid #222;
+      padding: 6px 7px;
+      vertical-align: middle;
+    }
+    th {
+      background: #f7f7f7;
+      font-size: 13px;
+    }
+    td:nth-child(1), td:nth-child(2) {
+      text-align: center;
+      width: 18%;
+    }
+    td:nth-child(3) { width: 64%; }
+    .summary {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 8px 16px;
+      font-size: 13px;
+    }
+    .summary div {
+      border-bottom: 1px dashed #bbb;
+      padding-bottom: 3px;
+    }
+    .sign {
+      margin-top: 40px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .screen-only { display: block; }
+    .sign-box {
+      width: 280px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .sign-line {
+      border-top: 1px solid #111;
+      margin-top: 40px;
+      padding-top: 6px;
+    }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      .panel { position: static; }
+      .paper-wrap { padding: 10px; }
+      .paper { width: 100%; min-height: auto; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .panel { display: none !important; }
+      .screen-only { display: none !important; }
+      .paper-wrap, .paper {
+        box-shadow: none;
+        border: 0;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+      }
+      .app { display: block; padding: 0; }
+      @page { size: A4; margin: 14mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel">
+      <h1>Generador de Memorándum</h1>
+      <p>Genera una rotación equitativa para Sub Cría 7, 9, 10, 11, 12, Cría 27 y CREAS, respetando tus reglas.</p>
+
+      <label for="mes">Mes</label>
+      <select id="mes">
+        <option value="0">Enero</option>
+        <option value="1">Febrero</option>
+        <option value="2">Marzo</option>
+        <option value="3" selected>Abril</option>
+        <option value="4">Mayo</option>
+        <option value="5">Junio</option>
+        <option value="6">Julio</option>
+        <option value="7">Agosto</option>
+        <option value="8">Septiembre</option>
+        <option value="9">Octubre</option>
+        <option value="10">Noviembre</option>
+        <option value="11">Diciembre</option>
+      </select>
+
+      <label for="anio">Año</label>
+      <input id="anio" type="number" value="2026" min="2024" max="2100" />
+
+      <label for="inspeccion">Encabezado</label>
+      <input id="inspeccion" type="text" value="INSPECCIÓN 6TA. ZONA" />
+
+      <label for="numeroMemo">N° Memorándum</label>
+      <input id="numeroMemo" type="text" value="/26" />
+
+      <label for="horario">Horario</label>
+      <input id="horario" type="text" value="DE 22:00 A 06:00 HORAS" />
+
+      <label for="firmante">Firma / Cargo</label>
+      <input id="firmante" type="text" value="INSPECCIÓN 6TA ZONA" />
+
+      <div class="btns">
+        <button id="btnGenerar">Generar memorándum</button>
+        <button id="btnGuardar" class="secondary">Guardar mes</button>
+        <button id="btnImprimir" class="light">Imprimir / Guardar PDF</button>
+      </div>
+
+      <div class="saved">
+        <label for="guardados">Meses guardados</label>
+        <select id="guardados"></select>
+        <div class="saved-row">
+          <button id="btnCargar" class="light">Cargar</button>
+          <button id="btnEliminar" class="danger">Eliminar</button>
+        </div>
+      </div>
+
+      <div class="note">
+        Reglas aplicadas:<br>
+        • Cría 27 y CREAS solo de lunes a jueves.<br>
+        • Las Sub Crías intentan no repetir el mismo día semanal dentro del mes.<br>
+        • La asignación se reparte lo más equitativa posible.
+      </div>
+    </aside>
+
+    <main class="paper-wrap">
+      <section id="paper" class="paper"></section>
+    </main>
+  </div>
+
+  <script>
+    const SUBS = ["SUB CRIA 7", "SUB CRIA 9", "SUB CRIA 10", "SUB CRIA 11", "SUB CRIA 12"];
+    const SPECIAL = ["CRIA 27", "CREAS"];
+    const ALL = [...SPECIAL, ...SUBS];
+    const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const MONTHS = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+    const SAVE_KEY = "rotacion_memo_guardados_v2";
+
+    const els = {
+      mes: document.getElementById('mes'),
+      anio: document.getElementById('anio'),
+      inspeccion: document.getElementById('inspeccion'),
+      numeroMemo: document.getElementById('numeroMemo'),
+      horario: document.getElementById('horario'),
+      firmante: document.getElementById('firmante'),
+      guardados: document.getElementById('guardados'),
+      paper: document.getElementById('paper')
+    };
+
+    let currentData = null;
+
+    function keyFor(month, year) {
+      return `${year}-${String(month + 1).padStart(2, '0')}`;
+    }
+
+    function loadSaved() {
+      try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); }
+      catch { return {}; }
+    }
+
+    function saveSaved(data) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    }
+
+    function refreshSavedSelect() {
+      const saved = loadSaved();
+      const keys = Object.keys(saved).sort().reverse();
+      els.guardados.innerHTML = keys.length
+        ? keys.map(k => `<option value="${k}">${saved[k].label}</option>`).join('')
+        : '<option value="">No hay meses guardados</option>';
+    }
+
+    function weekdayAllowed(dep, jsWeekday) {
+      if (SPECIAL.includes(dep)) return [1,2,3,4].includes(jsWeekday);
+      return true;
+    }
+
+    function getWeekOfMonth(day) {
+      return Math.floor((day - 1) / 7) + 1;
+    }
+
+    function chooseCandidate(pool, jsWeekday, totals, byWeekday, lastAssignedDay) {
+      const scored = pool.map(dep => {
+        const repeatedWeekday = SUBS.includes(dep) && byWeekday[dep].has(jsWeekday) ? 1 : 0;
+        const total = totals[dep] || 0;
+        const recent = lastAssignedDay[dep] ?? -999;
+        return { dep, repeatedWeekday, total, recent };
+      });
+
+      scored.sort((a, b) => {
+        if (a.repeatedWeekday !== b.repeatedWeekday) return a.repeatedWeekday - b.repeatedWeekday;
+        if (a.total !== b.total) return a.total - b.total;
+        return a.recent - b.recent;
+      });
+
+      return scored[0].dep;
+    }
+
+    function generateSchedule(month, year) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const totals = Object.fromEntries(ALL.map(d => [d, 0]));
+      const byWeekday = Object.fromEntries(SUBS.map(d => [d, new Set()]));
+      const lastAssignedDay = Object.fromEntries(ALL.map(d => [d, -999]));
+      const rows = [];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const jsWeekday = date.getDay();
+        const weekdayName = DAYS[jsWeekday];
+
+        let pool = ALL.filter(dep => weekdayAllowed(dep, jsWeekday));
+
+        if ([1,2,3,4].includes(jsWeekday)) {
+          const subsNoRepeat = SUBS.filter(dep => !byWeekday[dep].has(jsWeekday));
+          const specialPool = [...SPECIAL];
+          const candidatePool = [...specialPool, ...subsNoRepeat];
+
+          if (candidatePool.length > 0) {
+            pool = candidatePool;
+          }
+        } else {
+          const subsNoRepeat = SUBS.filter(dep => !byWeekday[dep].has(jsWeekday));
+          pool = subsNoRepeat.length ? subsNoRepeat : [...SUBS];
+        }
+
+        if (!pool.length) {
+          pool = ALL.filter(dep => weekdayAllowed(dep, jsWeekday));
+        }
+
+        const chosen = chooseCandidate(pool, jsWeekday, totals, byWeekday, lastAssignedDay);
+
+        rows.push({
+          weekdayName,
+          day,
+          dependency: chosen,
+          week: getWeekOfMonth(day)
+        });
+
+        totals[chosen] += 1;
+        lastAssignedDay[chosen] = day;
+        if (SUBS.includes(chosen)) {
+          byWeekday[chosen].add(jsWeekday);
+        }
+      }
+
+      return { rows, totals };
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderMemo(data) {
+      const { month, year, rows, totals } = data;
+      const recipients = 'C.R.A.E.A.S., CRIA 27°, SUB CRIA 7°, SUB CRIA 9°, SUB CRIA 10°, SUB CRIA 11° Y SUB CRIA 12°';
+
+      els.paper.innerHTML = `
+        <div class="memo-top">
+          <div class="memo-title">${escapeHtml(els.inspeccion.value)}</div>
+          <div class="memo-number">MEMORÁNDUM: <span class="line-fill">${escapeHtml(els.numeroMemo.value)}</span></div>
+        </div>
+
+        <div class="to-block"><strong>SEÑORES JEFES DE:</strong> ${recipients}.-</div>
+
+        <div class="body-text">
+          Atento a lo dispuesto por la superioridad, los señores <strong>JEFES O SUB JEFES</strong> de las dependencias subordinadas a esta Inspección a mi cargo, deberán cumplir con el <strong>SERVICIO DE CONTROLADOR DE COMISARÍAS NOCTURNO</strong>, debiendo controlar las Comisarías y Sub Comisarías, <strong>asentando las novedades en el libro correspondiente</strong> (el cual deberán retirar de la guardia de Comisaría 27° y al finalizar regresarlo a la misma); ante novedad de relevancia elevar vía jerárquica por WhatsApp para toma de conocimiento de la superioridad.
+        </div>
+
+        <div class="month-box">
+          <div class="m1">MES DE</div>
+          <div class="m2">${MONTHS[month]}</div>
+          <div class="m3">${year}</div>
+        </div>
+
+        <div class="section-head">
+          OFICIALES JEFES DESIGNADOS<br>
+          HORARIO: ${escapeHtml(els.horario.value)}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Día</th>
+              <th>Fecha</th>
+              <th>Dependencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td>${r.weekdayName}</td>
+                <td>${String(r.day).padStart(2, '0')}</td>
+                <td>${r.dependency}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="summary">
+          ${ALL.map(dep => `<div><strong>${dep}:</strong> ${totals[dep] || 0} servicios</div>`).join('')}
+        </div>
+
+        <div class="footer-note screen-only" style="margin-top:16px;">
+          <strong>Observación de la rotación:</strong> Comisaría 27 y CREAS solo fueron consideradas para los días lunes a jueves. Las dependencias Sub Cría 7, Sub Cría 9, Sub Cría 10, Sub Cría 11 y Sub Cría 12 fueron distribuidas procurando que no repitan el mismo día de la semana dentro del mes y manteniendo la asignación lo más equitativa posible.
+        </div>
+
+        <div class="footer-note" style="margin-top:12px;">
+          SEÑORES JEFES DEBERÁN NOTIFICAR AL PERSONAL DESIGNADO CON DATOS (NOMBRES, APELLIDO, N.I., D.N.I. Y JERARQUÍA) COMPLETOS Y ENVIAR LA NOTIFICACIÓN A INSPECCIÓN 6TA ZONA.
+        </div>
+
+        <div class="sign">
+          <div class="sign-box">
+            <div class="sign-line">${escapeHtml(els.firmante.value)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildCurrent() {
+      const month = Number(els.mes.value);
+      const year = Number(els.anio.value);
+      const generated = generateSchedule(month, year);
+      currentData = { month, year, ...generated, label: `${MONTHS[month]} ${year}` };
+      renderMemo(currentData);
+    }
+
+    document.getElementById('btnGenerar').addEventListener('click', buildCurrent);
+
+    document.getElementById('btnGuardar').addEventListener('click', () => {
+      if (!currentData) buildCurrent();
+      const saved = loadSaved();
+      const key = keyFor(currentData.month, currentData.year);
+      saved[key] = {
+        ...currentData,
+        ui: {
+          inspeccion: els.inspeccion.value,
+          numeroMemo: els.numeroMemo.value,
+          horario: els.horario.value,
+          firmante: els.firmante.value
+        }
+      };
+      saveSaved(saved);
+      refreshSavedSelect();
+      alert('Mes guardado correctamente.');
+    });
+
+    document.getElementById('btnCargar').addEventListener('click', () => {
+      const key = els.guardados.value;
+      if (!key) return;
+      const saved = loadSaved();
+      const item = saved[key];
+      if (!item) return;
+      els.mes.value = item.month;
+      els.anio.value = item.year;
+      if (item.ui) {
+        els.inspeccion.value = item.ui.inspeccion || els.inspeccion.value;
+        els.numeroMemo.value = item.ui.numeroMemo || els.numeroMemo.value;
+        els.horario.value = item.ui.horario || els.horario.value;
+        els.firmante.value = item.ui.firmante || els.firmante.value;
+      }
+      currentData = item;
+      renderMemo(item);
+    });
+
+    document.getElementById('btnEliminar').addEventListener('click', () => {
+      const key = els.guardados.value;
+      if (!key) return;
+      if (!confirm('¿Seguro que querés eliminar el mes guardado?')) return;
+      const saved = loadSaved();
+      delete saved[key];
+      saveSaved(saved);
+      refreshSavedSelect();
+      alert('Mes eliminado.');
+    });
+
+    document.getElementById('btnImprimir').addEventListener('click', () => window.print());
+
+    refreshSavedSelect();
+    buildCurrent();
+  </script>
+</body>
+</html>
