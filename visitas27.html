@@ -11,17 +11,19 @@ h1{margin:0 0 8px;font-size:25px}h2{font-size:18px;margin:0 0 14px}.sub{color:#6
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 label{font-weight:700;font-size:13px;display:block;margin-bottom:6px}input,select,textarea{width:100%;padding:10px;border:1px solid #cbd3da;border-radius:9px;font-size:14px}
 textarea{min-height:70px;resize:vertical}.buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.btn-generar{font-size:18px;padding:17px 28px;min-width:260px;box-shadow:0 4px 12px #18794e44}
 button{border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer;background:#263746;color:white}
 button.secondary{background:#66727d}button.danger{background:#a92d2d}button.success{background:#18794e}
 table{width:100%;border-collapse:collapse}th,td{padding:11px 9px;border-bottom:1px solid #e2e6e9;text-align:left;vertical-align:middle}th{background:#f5f7f9}
 .badge{display:inline-block;padding:5px 8px;border-radius:20px;background:#e9eef3;font-weight:700;font-size:12px}.notice{padding:12px;border-radius:10px;background:#f6f8fa;border-left:4px solid #263746;margin-top:12px}
 .small{font-size:12px;color:#68747e}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{padding:7px 9px;font-size:12px}
-#output{display:none}.print-header{display:none}
+.print-header{display:none}
 @media(max-width:700px){.container{padding:10px}table{font-size:13px;display:block;overflow:auto}.card{padding:14px}}
 @media print{
-body{background:#fff}.container{max-width:none;padding:0}.no-print{display:none!important}.card{box-shadow:none;border:0;padding:0;margin:0 0 12px}
-#printArea{display:block!important}.print-header{display:block}.print-title{font-size:18px;font-weight:bold;text-align:center}.print-meta{text-align:center;font-size:12px;margin:5px 0 12px}
-table{font-size:11px}th,td{padding:6px;border:1px solid #555}.notice{border:1px solid #555;background:#fff}
+  body{background:#fff}.container{max-width:none;padding:0}.no-print{display:none!important}.card{box-shadow:none;border:0;padding:0;margin:0 0 12px}
+  .print-header{display:block}.print-title{font-size:18px;font-weight:bold;text-align:center}.print-meta{text-align:center;font-size:12px;margin:5px 0 12px}
+  table{font-size:11px}th,td{padding:6px;border:1px solid #555}.notice{border:1px solid #555;background:#fff}
+  #datosServicioCard{display:block!important}
 }
 </style>
 </head>
@@ -69,27 +71,11 @@ table{font-size:11px}th,td{padding:6px;border:1px solid #555}.notice{border:1px 
 </div>
 
 <div class="buttons">
-<button class="success" onclick="generar()">🔄 Generar rotación</button>
+<button class="success btn-generar" onclick="generar()">🔄 GENERAR SERVICIO</button>
 <button onclick="copiarServicio()">📋 Copiar servicio</button>
-<button onclick="guardar()">💾 Guardar</button>
-<button class="secondary" onclick="cargar()">📂 Cargar guardado</button>
 <button class="secondary" onclick="window.print()">🖨️ Imprimir / PDF</button>
-<button class="danger" onclick="limpiar()">🗑️ Limpiar</button>
+<button class="danger" onclick="limpiar()">🗑️ Limpiar actual</button>
 </div>
-</div>
-
-<div class="card no-print">
-<h2>Rotación inicial cargada</h2>
-<div class="small">Estas asignaciones son las que proporcionaste y se utilizan como punto de partida.</div>
-<table style="margin-top:10px">
-<thead><tr><th>Fecha</th><th>Dependencia 1</th><th>Dependencia 2</th></tr></thead>
-<tbody>
-<tr><td>11/08/2026</td><td>Sub Cría 11</td><td>Sub Cría 12</td></tr>
-<tr><td>18/08/2026</td><td>Sub Cría 9</td><td>Sub Cría 7</td></tr>
-<tr><td>25/08/2026</td><td>Sub Cría 10</td><td>Sub Cría 11</td></tr>
-<tr><td>01/09/2026</td><td>Sub Cría 9</td><td>Sub Cría 12</td></tr>
-</tbody>
-</table>
 </div>
 
 <div id="printArea">
@@ -98,29 +84,41 @@ table{font-size:11px}th,td{padding:6px;border:1px solid #555}.notice{border:1px 
 <div class="print-meta" id="printMeta"></div>
 </div>
 
-<div class="card" id="resultadoCard" style="display:none">
-<h2 class="no-print">📋 Servicio generado</h2>
-<div id="resumen"></div>
-<table id="tabla">
-<thead><tr><th>Fecha</th><th>Día</th><th>Efectivo / Dependencia</th><th>Horario</th><th>Acciones</th></tr></thead>
-<tbody></tbody>
-</table>
-</div>
-</div>
-
-<div class="card no-print">
+<!-- DATOS DEL SERVICIO (Ahora incluye la tabla de dependencias generadas) -->
+<div class="card" id="datosServicioCard">
 <h2>ℹ️ Datos del servicio</h2>
 <div class="notice">
 <strong>🚨 SERVICIO REFUERZO COMISARIA 27 ARROYO SECO</strong><br>
-<strong>Motivo:</strong> Activación visitas para los detenidos.<br><br>
+<strong>Motivo:</strong> <span id="vistaMotivo">Activación visitas para los detenidos.</span><br>
+<strong>Modalidad:</strong> <span id="vistaModalidad">Solo femeninos mayores.</span><br>
+<strong>A cargo:</strong> <span id="vistaAcargo">SUPERIOR DE COMISARIA 27</span>.<br><br>
 <strong>🚨 Días martes — Recepción</strong><br>
 Presentación Cria. 27: <span id="vistaPresentacion">12:30 hs</span><br>
 Paquetes: <span id="vistaPaquetes">13:00 hs</span><br>
 Ingreso: <span id="vistaIngreso">15:00 hs</span><br>
 Salida: <span id="vistaSalida">18:00 hs</span><br>
-Finalización: <span id="vistaFinalizacion">18:30 hs</span><br><br>
-<strong>🚨 Modalidad:</strong> Solo femeninos mayores.<br>
-<strong>🚨 A cargo:</strong> <span id="vistaAcargo">SUPERIOR DE COMISARIA 27</span>.
+Finalización: <span id="vistaFinalizacion">18:30 hs</span>
+</div>
+
+<!-- Tabla de dependencias integrada aquí -->
+<div id="datosDependenciasGeneradas" style="margin-top: 18px; display: none;">
+  <h3 style="font-size: 16px; margin-bottom: 10px; border-bottom: 2px solid #e2e6e9; padding-bottom: 6px;">📅 Dependencias Asignadas</h3>
+  <table id="tablaDependencias">
+    <thead><tr><th>Fecha</th><th>Día</th><th>Dependencias</th><th class="no-print">Acciones</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+</div>
+</div>
+
+<!-- NUEVO APARTADO: ARCHIVOS GUARDADOS -->
+<div class="card no-print">
+<h2>💾 Archivos Guardados</h2>
+<div id="listaArchivos" class="notice">
+  <p class="small">No hay archivos guardados aún.</p>
+</div>
+<div class="buttons" style="margin-top: 12px;">
+  <button class="success" onclick="guardarComo()">💾 Guardar configuración actual como...</button>
 </div>
 </div>
 
@@ -144,187 +142,270 @@ function fmt(d){return d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digi
 function diaNombre(d){return d.toLocaleDateString("es-AR",{weekday:"long"})}
 
 function actualizarVista(){
-["Presentacion","Paquetes","Ingreso","Salida","Finalizacion","Acargo"].forEach(x=>{
-let id=x.toLowerCase();
-let el=document.getElementById("vista"+x);
-if(el) el.textContent=document.getElementById(id).value;
-});
+  ["Presentacion","Paquetes","Ingreso","Salida","Finalizacion","Acargo","Motivo","Modalidad"].forEach(x=>{
+    let id=x.toLowerCase();
+    let el=document.getElementById("vista"+x);
+    if(el) el.textContent=document.getElementById(id).value;
+  });
 }
 
-["presentacion","paquetes","ingreso","salida","finalizacion","acargo"].forEach(id=>{
-document.getElementById(id).addEventListener("input",actualizarVista);
+["presentacion","paquetes","ingreso","salida","finalizacion","acargo","motivo","modalidad"].forEach(id=>{
+  document.getElementById(id).addEventListener("input",actualizarVista);
 });
 
 function obtenerMartes(desde,hasta){
-let d=fechaLocal(desde), fin=fechaLocal(hasta), arr=[];
-while(d<=fin){
-if(d.getDay()===2) arr.push(new Date(d));
-d.setDate(d.getDate()+1);
-}
-return arr;
+  let d=fechaLocal(desde), fin=fechaLocal(hasta), arr=[];
+  while(d<=fin){
+    if(d.getDay()===2) arr.push(new Date(d));
+    d.setDate(d.getDate()+1);
+  }
+  return arr;
 }
 
-/* Generador equilibrado:
-   - conserva las asignaciones iniciales suministradas;
-   - para nuevas fechas elige las dependencias con menor cantidad de usos;
-   - penaliza repetir una dependencia respecto de la fecha anterior.
-*/
 function elegirParaFecha(fecha,index,usos,prev){
-let fija=iniciales[iso(fecha)];
-if(fija) return fija.slice(0,Number(document.getElementById("cantidad").value));
+  let fija=iniciales[iso(fecha)];
+  if(fija) return fija.slice(0,Number(document.getElementById("cantidad").value));
 
-let cantidad=Math.min(5,Math.max(1,Number(document.getElementById("cantidad").value)));
-let seleccion=[];
-let disponibles=deps.slice();
+  let cantidad=Math.min(5,Math.max(1,Number(document.getElementById("cantidad").value)));
+  let seleccion=[];
+  let disponibles=deps.slice();
 
-for(let n=0;n<cantidad;n++){
-let orden=disponibles.sort((a,b)=>{
-let ua=usos[a]||0, ub=usos[b]||0;
-if(ua!==ub)return ua-ub;
-let pa=prev.includes(a)?1:0, pb=prev.includes(b)?1:0;
-if(pa!==pb)return pa-pb;
-return a.localeCompare(b);
-});
-let elegido=orden[0];
-seleccion.push(elegido);
-disponibles=disponibles.filter(x=>x!==elegido);
-}
-return seleccion;
+  for(let n=0;n<cantidad;n++){
+    let orden=disponibles.sort((a,b)=>{
+      let ua=usos[a]||0, ub=usos[b]||0;
+      if(ua!==ub)return ua-ub;
+      let pa=prev.includes(a)?1:0, pb=prev.includes(b)?1:0;
+      if(pa!==pb)return pa-pb;
+      return a.localeCompare(b);
+    });
+    let elegido=orden[0];
+    seleccion.push(elegido);
+    disponibles=disponibles.filter(x=>x!==elegido);
+  }
+  return seleccion;
 }
 
 function generar(){
-actualizarVista();
-let desde=document.getElementById("desde").value;
-let hasta=document.getElementById("hasta").value;
-if(!desde||!hasta||desde>hasta){alert("Revisá las fechas.");return}
+  actualizarVista();
+  const desde=document.getElementById("desde").value;
+  const hasta=document.getElementById("hasta").value;
+  const cantidad=Math.min(5,Math.max(1,Number(document.getElementById("cantidad").value)||2));
 
-let fechas=obtenerMartes(desde,hasta);
-let usos={}; deps.forEach(x=>usos[x]=0);
-let prev=[];
-servicios=[];
+  if(!desde || !hasta){ alert("Seleccioná las fechas desde y hasta."); return; }
+  if(desde>hasta){ alert("La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'."); return; }
 
-fechas.forEach((d,i)=>{
-let asignados=elegirParaFecha(d,i,usos,prev);
-asignados.forEach(x=>usos[x]=(usos[x]||0)+1);
-servicios.push({fecha:iso(d),deps:asignados});
-prev=asignados;
-});
+  const fechas=obtenerMartes(desde,hasta);
+  if(!fechas.length){
+    servicios=[];
+    render();
+    alert("No hay martes dentro del período seleccionado.");
+    return;
+  }
 
-render();
+  let usos={};
+  deps.forEach(x=>usos[x]=0);
+  let prev=[];
+  const nuevos=[];
+
+  fechas.forEach((d,i)=>{
+    let asignados=elegirParaFecha(d,i,usos,prev).slice(0,cantidad);
+    asignados.forEach(x=>usos[x]=(usos[x]||0)+1);
+    nuevos.push({fecha:iso(d),deps:asignados});
+    prev=asignados;
+  });
+
+  servicios=nuevos;
+  render();
+  
+  const card=document.getElementById("datosDependenciasGeneradas");
+  if(card) card.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
 function render(){
-let tbody=document.querySelector("#tabla tbody");
-tbody.innerHTML="";
-servicios.forEach((s,i)=>{
-let tr=document.createElement("tr");
-let horario=`Presentación ${document.getElementById("presentacion").value} · Paquetes ${document.getElementById("paquetes").value} · Ingreso ${document.getElementById("ingreso").value} · Salida ${document.getElementById("salida").value} · Fin ${document.getElementById("finalizacion").value}`;
-tr.innerHTML=`
-<td>${fmt(fechaLocal(s.fecha))}</td>
-<td style="text-transform:capitalize">${diaNombre(fechaLocal(s.fecha))}</td>
-<td>${s.deps.map((d,j)=>`<div class="badge">${d}</div>`).join(" ")}</td>
-<td class="small">${horario}</td>
-<td class="actions no-print">
-<button onclick="editar(${i})">✏️ Editar</button>
-<button class="danger" onclick="eliminar(${i})">×</button>
-</td>`;
-tbody.appendChild(tr);
-});
-document.getElementById("resultadoCard").style.display="block";
-document.getElementById("resumen").innerHTML=
-`<div class="notice"><strong>Motivo:</strong> ${esc(document.getElementById("motivo").value)} · <strong>Modalidad:</strong> ${esc(document.getElementById("modalidad").value)} · <strong>A cargo:</strong> ${esc(document.getElementById("acargo").value)}</div>`;
-document.getElementById("printMeta").textContent=
-`${document.getElementById("motivo").value} · ${document.getElementById("modalidad").value} · ${document.getElementById("acargo").value}`;
+  let tbody=document.querySelector("#tablaDependencias tbody");
+  tbody.innerHTML="";
+  
+  servicios.forEach((s,i)=>{
+    let tr=document.createElement("tr");
+    let horario=`Pres: ${document.getElementById("presentacion").value} · Ing: ${document.getElementById("ingreso").value} · Sal: ${document.getElementById("salida").value}`;
+    tr.innerHTML=`
+      <td>${fmt(fechaLocal(s.fecha))}</td>
+      <td style="text-transform:capitalize">${diaNombre(fechaLocal(s.fecha))}</td>
+      <td>${s.deps.map((d)=>`<span class="badge">${d}</span>`).join(" ")}</td>
+      <td class="actions no-print">
+        <button onclick="editar(${i})">✏️</button>
+        <button class="danger" onclick="eliminar(${i})">×</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  
+  document.getElementById("datosDependenciasGeneradas").style.display = servicios.length ? "block" : "none";
+  document.getElementById("printMeta").textContent = `${document.getElementById("motivo").value} · ${document.getElementById("modalidad").value} · ${document.getElementById("acargo").value}`;
 }
 
 function editar(i){
-let s=servicios[i];
-let texto=prompt("Ingresá las dependencias separadas por coma.\nEj.: SUB CRIA 7, SUB CRIA 10",s.deps.join(", "));
-if(texto===null)return;
-let vals=texto.split(",").map(x=>x.trim().toUpperCase()).filter(Boolean);
-if(!vals.length||vals.some(x=>!deps.includes(x))){alert("Usá solamente: "+deps.join(", "));return}
-servicios[i].deps=[...new Set(vals)];
-render();
+  let s=servicios[i];
+  let texto=prompt("Ingresá las dependencias separadas por coma.\nEj.: SUB CRIA 7, SUB CRIA 10",s.deps.join(", "));
+  if(texto===null)return;
+  let vals=texto.split(",").map(x=>x.trim().toUpperCase()).filter(Boolean);
+  if(!vals.length||vals.some(x=>!deps.includes(x))){alert("Usá solamente: "+deps.join(", "));return}
+  servicios[i].deps=[...new Set(vals)];
+  render();
 }
 
 function eliminar(i){
-if(confirm("¿Eliminar este servicio?")){servicios.splice(i,1);render();}
+  if(confirm("¿Eliminar esta fecha del servicio?")){servicios.splice(i,1);render();}
 }
 
-function guardar(){
-if(!servicios.length){alert("Primero generá la rotación.");return}
-let datos={
-config:{
-desde:desde.value,hasta:hasta.value,cantidad:cantidad.value,presentacion:presentacion.value,
-paquetes:paquetes.value,ingreso:ingreso.value,salida:salida.value,finalizacion:finalizacion.value,
-motivo:motivo.value,modalidad:modalidad.value,acargo:acargo.value
-},servicios};
-localStorage.setItem("servicioComisaria27",JSON.stringify(datos));
-alert("Servicio guardado en este navegador.");
+function obtenerDatosGuardado(){
+  return {
+    config:{
+      desde:document.getElementById("desde").value,
+      hasta:document.getElementById("hasta").value,
+      cantidad:document.getElementById("cantidad").value,
+      presentacion:document.getElementById("presentacion").value,
+      paquetes:document.getElementById("paquetes").value,
+      ingreso:document.getElementById("ingreso").value,
+      salida:document.getElementById("salida").value,
+      finalizacion:document.getElementById("finalizacion").value,
+      motivo:document.getElementById("motivo").value,
+      modalidad:document.getElementById("modalidad").value,
+      acargo:document.getElementById("acargo").value
+    },
+    servicios:servicios
+  };
 }
 
-function cargar(){
-let raw=localStorage.getItem("servicioComisaria27");
-if(!raw){alert("No hay un servicio guardado.");return}
-let d=JSON.parse(raw), c=d.config;
-Object.keys(c).forEach(k=>{let el=document.getElementById(k);if(el)el.value=c[k]});
-servicios=d.servicios||[];
-actualizarVista();render();
-alert("Servicio cargado.");
+// --- GESTIÓN DE ARCHIVOS GUARDADOS ---
+function getArchivos(){
+  return JSON.parse(localStorage.getItem("serviciosComisaria27_archivos") || "[]");
 }
+
+function saveArchivos(archivos){
+  localStorage.setItem("serviciosComisaria27_archivos", JSON.stringify(archivos));
+  renderArchivos();
+}
+
+function guardarComo(){
+  if(!servicios.length){ alert("Primero generá el servicio."); return; }
+  const nombreDefault = "Servicio " + document.getElementById("desde").value + " al " + document.getElementById("hasta").value;
+  const nombre = prompt("Nombre para este archivo guardado:", nombreDefault);
+  if(!nombre) return;
+  
+  const archivos = getArchivos();
+  archivos.push({
+    id: Date.now(),
+    nombre: nombre,
+    fecha: new Date().toLocaleString("es-AR"),
+    datos: obtenerDatosGuardado()
+  });
+  saveArchivos(archivos);
+  alert("✅ Guardado correctamente en 'Archivos Guardados'.");
+}
+
+function cargarArchivo(id){
+  const archivos = getArchivos();
+  const archivo = archivos.find(a => a.id === id);
+  if(!archivo) return;
+  
+  const c = archivo.datos.config;
+  Object.keys(c).forEach(k=>{
+    let el=document.getElementById(k);
+    if(el) el.value=c[k];
+  });
+  servicios = archivo.datos.servicios || [];
+  actualizarVista();
+  render();
+  alert("📂 Servicio cargado: " + archivo.nombre);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function eliminarArchivo(id){
+  if(!confirm("¿Eliminar este archivo guardado permanentemente?")) return;
+  let archivos = getArchivos();
+  archivos = archivos.filter(a => a.id !== id);
+  saveArchivos(archivos);
+}
+
+function renderArchivos(){
+  const cont = document.getElementById("listaArchivos");
+  const archivos = getArchivos();
+  
+  if(!archivos.length){
+    cont.innerHTML = '<p class="small">No hay archivos guardados aún. Usá el botón "Guardar configuración actual como..." para crear uno.</p>';
+    return;
+  }
+  
+  let html = '<table style="width:100%"><thead><tr><th>Nombre / Período</th><th>Fecha de guardado</th><th class="no-print">Acciones</th></tr></thead><tbody>';
+  archivos.forEach(a => {
+    html += `<tr>
+      <td><strong>${esc(a.nombre)}</strong><br><span class="small">Del ${a.datos.config.desde} al ${a.datos.config.hasta}</span></td>
+      <td class="small">${a.fecha}</td>
+      <td class="actions no-print">
+        <button class="success" onclick="cargarArchivo(${a.id})">📂 Cargar</button>
+        <button class="danger" onclick="eliminarArchivo(${a.id})">🗑️</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  cont.innerHTML = html;
+}
+// -------------------------------------
 
 function limpiar(){
-if(!confirm("¿Borrar el servicio generado y el guardado local?"))return;
-servicios=[];localStorage.removeItem("servicioComisaria27");
-document.getElementById("resultadoCard").style.display="none";
+  if(!confirm("¿Borrar el servicio generado actual? (Los archivos guardados no se borrarán)"))return;
+  servicios=[];
+  render();
 }
 
 function copiarServicio(){
-if(!servicios.length){alert("Primero generá el servicio.");return}
-let lineas=[];
-lineas.push("🚨🚨🚨 SERVICIO REFUERZO COMISARIA 27 ARROYO SECO");
-lineas.push("MOTIVO: "+document.getElementById("motivo").value);
-lineas.push("");
-lineas.push("🚨🚨 DÍAS MARTES");
-lineas.push("RECEPCIÓN");
-lineas.push("");
-lineas.push("Presentación Cria. 27: "+document.getElementById("presentacion").value);
-lineas.push("PAQUETES: "+document.getElementById("paquetes").value);
-lineas.push("INGRESO: "+document.getElementById("ingreso").value);
-lineas.push("SALIDA: "+document.getElementById("salida").value);
-lineas.push("");
-lineas.push("Finalización servicio: "+document.getElementById("finalizacion").value);
-lineas.push("");
-lineas.push("🚨🚨🚨 MODALIDAD DE INGRESO");
-lineas.push(document.getElementById("modalidad").value+".");
-lineas.push("");
-lineas.push("🚨🚨 A CARGO");
-lineas.push(document.getElementById("acargo").value+" ...");
-lineas.push("");
-lineas.push("PERSONAL AFECTADO:");
-lineas.push("");
+  if(!servicios.length){alert("Primero generá el servicio.");return}
+  let lineas=[];
+  lineas.push("🚨🚨🚨 SERVICIO REFUERZO COMISARIA 27 ARROYO SECO");
+  lineas.push("MOTIVO: "+document.getElementById("motivo").value);
+  lineas.push("");
+  lineas.push("🚨🚨 DÍAS MARTES");
+  lineas.push("RECEPCIÓN");
+  lineas.push("");
+  lineas.push("Presentación Cria. 27: "+document.getElementById("presentacion").value);
+  lineas.push("PAQUETES: "+document.getElementById("paquetes").value);
+  lineas.push("INGRESO: "+document.getElementById("ingreso").value);
+  lineas.push("SALIDA: "+document.getElementById("salida").value);
+  lineas.push("");
+  lineas.push("Finalización servicio: "+document.getElementById("finalizacion").value);
+  lineas.push("");
+  lineas.push("🚨🚨🚨 MODALIDAD DE INGRESO");
+  lineas.push(document.getElementById("modalidad").value+".");
+  lineas.push("");
+  lineas.push("🚨🚨 A CARGO");
+  lineas.push(document.getElementById("acargo").value+" ...");
+  lineas.push("");
+  lineas.push("PERSONAL AFECTADO:");
+  lineas.push("");
 
-servicios.forEach((s)=>{
-lineas.push("MARTES "+fmt(fechaLocal(s.fecha)));
-s.deps.forEach(d=>lineas.push("• "+d+": 01 efectivo (F/M)"));
-lineas.push("");
-});
-let texto=lineas.join("\n").trim();
-navigator.clipboard.writeText(texto).then(()=>{
-alert("✅ Servicio copiado. Ya podés pegarlo en WhatsApp.");
-}).catch(()=>{
-let ta=document.createElement("textarea");
-ta.value=texto;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();
-alert("✅ Servicio copiado. Ya podés pegarlo en WhatsApp.");
-});
+  servicios.forEach((s)=>{
+    lineas.push("MARTES "+fmt(fechaLocal(s.fecha)));
+    s.deps.forEach(d=>lineas.push("• "+d+": 01 efectivo (F/M)"));
+    lineas.push("");
+  });
+  
+  let texto=lineas.join("\n").trim();
+  navigator.clipboard.writeText(texto).then(()=>{
+    alert("✅ Servicio copiado. Ya podés pegarlo en WhatsApp.");
+  }).catch(()=>{
+    let ta=document.createElement("textarea");
+    ta.value=texto;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();
+    alert("✅ Servicio copiado. Ya podés pegarlo en WhatsApp.");
+  });
 }
 
 function esc(v){
-return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+  return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
 
+// Inicialización
 actualizarVista();
-generar();
+renderArchivos();
 </script>
 </body>
 </html>
