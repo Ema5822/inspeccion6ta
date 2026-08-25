@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Lista de Jefes - Con Correos</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: Calibri, Arial, sans-serif;
+    background: #f3f3f3;
+    padding: 20px;
+    margin: 0;
+  }
+  .container {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .main-section {
+    flex: 1;
+    min-width: 800px;
+  }
+  .sidebar {
+    width: 420px;
+    flex-shrink: 0;
+  }
+  .toolbar {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .toolbar button {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: Calibri, Arial, sans-serif;
+    font-size: 13px;
+  }
+  .toolbar button:hover {
+    background: #1557b0;
+  }
+  .toolbar button.reset {
+    background: #f9a825;
+  }
+  .toolbar button.reset:hover {
+    background: #f57f17;
+  }
+  .excel-container {
+    background: white;
+    border: 1px solid #b7b7b7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  table {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #d0d7de;
+    padding: 4px 10px;
+    text-align: left;
+    height: 22px;
+  }
+  thead th {
+    background: #f0f0f0;
+    color: #333;
+    font-weight: normal;
+    text-align: center;
+    border-bottom: 2px solid #b7b7b7;
+  }
+  .row-number {
+    background: #f0f0f0;
+    text-align: center;
+    color: #333;
+    font-weight: normal;
+    width: 40px;
+  }
+  .corner {
+    background: #f0f0f0;
+    border-right: 2px solid #b7b7b7;
+  }
+  td[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+  }
+  td[contenteditable="true"]:focus {
+    background: #fff9c4 !important;
+    outline: 2px solid #1a73e8;
+    outline-offset: -2px;
+  }
+  tbody td:hover {
+    background: #e8f0fe;
+  }
+  tbody tr:nth-child(even) td:not(.row-number) {
+    background: #fafafa;
+  }
+  .col-a { min-width: 200px; }
+  .col-b { min-width: 140px; text-align: center; }
+  .col-c { min-width: 90px; text-align: center; }
+  .col-d { min-width: 120px; text-align: center; }
+  .col-e { min-width: 140px; text-align: center; }
+  .info {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #555;
+  }
+  .cargo-select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: Calibri, Arial, sans-serif;
+    font-size: 13px;
+    text-align: center;
+    cursor: pointer;
+    padding: 2px;
+    outline: none;
+  }
+  .cargo-select:focus {
+    background: #fff9c4;
+    outline: 2px solid #1a73e8;
+  }
+  
+  .sidebar-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1a73e8;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1a73e8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .copy-btn {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: Calibri, Arial, sans-serif;
+  }
+  .copy-btn:hover {
+    background: #1b5e20;
+  }
+  .dependency-card {
+    background: white;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .card-header {
+    background: #1a73e8;
+    color: white;
+    padding: 10px 12px;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-header:hover {
+    background: #1557b0;
+  }
+  .card-header .toggle {
+    font-size: 16px;
+    transition: transform 0.2s;
+  }
+  .card-header.collapsed .toggle {
+    transform: rotate(-90deg);
+  }
+  .card-body {
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .card-body.collapsed {
+    display: none;
+  }
+  .card-address {
+    color: #555;
+    font-size: 12px;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .card-address[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+  }
+  .card-address[contenteditable="true"]:focus {
+    background: #fff9c4;
+    outline: 1px solid #1a73e8;
+  }
+  .card-email {
+    color: #1a73e8;
+    font-size: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    word-break: break-all;
+  }
+  .card-email[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+  }
+  .card-email[contenteditable="true"]:focus {
+    background: #fff9c4;
+    outline: 1px solid #1a73e8;
+  }
+  .card-role {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .card-role strong {
+    color: #1a73e8;
+    min-width: 110px;
+  }
+  .card-role .name-field {
+    flex: 1;
+    min-width: 120px;
+    outline: none;
+    cursor: text;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  .card-role .name-field:focus {
+    background: #fff9c4;
+    outline: 1px solid #1a73e8;
+  }
+  .card-phone {
+    color: #2e7d32;
+    font-weight: bold;
+    outline: none;
+    cursor: text;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  .card-phone:focus {
+    background: #fff9c4;
+    outline: 1px solid #2e7d32;
+  }
+  .empty-role {
+    color: #999;
+    font-style: italic;
+  }
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #2e7d32;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 1000;
+  }
+  .notification.show {
+    display: block;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="notification" id="notification">✓ Copiado al portapapeles</div>
+
+<div class="container">
+  <div class="main-section">
+    <div class="toolbar">
+      <button onclick="agregarFila()">➕ Agregar fila</button>
+      <button onclick="exportarCSV()">📥 Exportar a CSV</button>
+      <button class="reset" onclick="resetearDatos()">🔄 Resetear datos</button>
+      <button onclick="limpiarTodo()" style="background: #d93025;">🗑️ Limpiar todo</button>
+    </div>
+
+    <div class="excel-container">
+      <table id="miTabla">
+        <thead>
+          <tr>
+            <th class="corner"></th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+          </tr>
+          <tr>
+            <th class="corner"></th>
+            <th class="col-a">JEFES</th>
+            <th class="col-b">CUIL</th>
+            <th class="col-c">DEPENDENCIA</th>
+            <th class="col-d">TELÉFONO</th>
+            <th class="col-e">CARGO</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+        </tbody>
+      </table>
+    </div>
+
+    <p class="info">💡 En la columna <strong>CARGO</strong> usa el menú desplegable para elegir: JEFE, SUB JEFE o 2DO SUB JEFE. Los cambios se sincronizan automáticamente con el panel lateral.</p>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-title">
+      <span>📋 Información de Dependencias</span>
+      <button class="copy-btn" onclick="copiarInformacion()">📋 Copiar Todo</button>
+    </div>
+    
+    <div id="panelDependencias"></div>
+  </div>
+</div>
+
+<script>
+  const datosIniciales = [
+    ["INSP PORTILLO FEDERICO", "20-25979064-7", "C27", "341 6275784", "SUB JEFE"],
+    ["INSP VIDAL MARIO", "20-24241449-8", "C27", "341 2625983", "2DO SUB JEFE"],
+    ["CRIO TREJO MARIO", "20-27935574-2", "C27", "341 6275784", "JEFE"],
+    ["SUB CRIO CONTARDO CINTIA", "24-29200901-8", "CREAS", "341 3102386", "SUB JEFE"],
+    ["INSP NAVARRO JAVIER", "20-22602054-4", "CREAS", "341 2501725", "2DO SUB JEFE"],
+    ["CRIO SUP MACHUCA CARLOS", "20-28922906-0", "CREAS", "341 3595752", "JEFE"],
+    ["CRIO SUP BORDON EMILIANO", "20-30747087-0", "INSP 6", "341 301-3953", "JEFE"],
+    ["SUB CRIO BAUCHE CESAR", "20-28159891-1", "S10", "341 2719084", "JEFE"],
+    ["SUB CRIO GESTARI LUCIANO", "20-28449690-7", "S10", "341 3845129", "SUB JEFE"],
+    ["CRIO PETULLA DIEGO", "20-27648327-8", "S11", "341 308-1713", "JEFE"],
+    ["SUB CRIO LOPEZ CARMEN", "27-25037094-1", "S11", "341 3453151", "SUB JEFE"],
+    ["SUB CRIO ROLDAN ALEJANDRO", "20-25900834-5", "S12", "341 6583694", "JEFE"],
+    ["SUB CRIO ZAMORANO SERGIO", "20-23402223-8", "S12", "341 589849", "SUB JEFE"],
+    ["CRIO GONZALEZ JESUS", "20-24673650-3", "S7", "341 6554080", "JEFE"],
+    ["SUB CRIO VEGA CARLOS", "23-21768586-9", "S7", "341 514-7443", "SUB JEFE"],
+    ["INSP PONCE DE LEON", "20-30381795-7", "S9", "341 6215955", "SUB JEFE"],
+    ["CRIO MEDRAN ALEJANDRO", "20-30747055-2", "S9", "341 3443844", "JEFE"]
+  ];
+
+  const dependenciasInfo = {
+    "INSP 6": {
+      nombre: "INSPECCIÓN 6TA",
+      direccion: "9 DE JULIO 247, P.A. ARROYO SECO",
+      email: "insp6ta@gmail.com",
+      roles: ["JEFE"]
+    },
+    "C27": {
+      nombre: "COMISARÍA 27MA",
+      direccion: "9 DE JULIO 247, ARROYO SECO",
+      email: "comisaria27arroyoseco@gmail.com",
+      roles: ["JEFE", "SUB JEFE", "2DO SUB JEFE"]
+    },
+    "CREAS": {
+      nombre: "CREAS",
+      direccion: "JUAN B. JUSTO E INDEPENDENCIA, ARROYO SECO",
+      email: "comandoarroyosecour2@gmail.com",
+      roles: ["JEFE", "SUB JEFE", "2DO SUB JEFE"]
+    },
+    "S7": {
+      nombre: "SUB COMISARÍA 7",
+      direccion: "ITALIA 332, ALBARELLOS",
+      email: "subcria7ur2@santafe.gov.ar",
+      roles: ["JEFE", "SUB JEFE"]
+    },
+    "S9": {
+      nombre: "SUB COMISARÍA 9",
+      direccion: "ENTRE RÍOS 257, VILLA AMELIA",
+      email: "subcria9ur2@santafe.gov.ar",
+      roles: ["JEFE", "SUB JEFE"]
+    },
+    "S10": {
+      nombre: "SUB COMISARÍA 10",
+      direccion: "BELGRANO 654, CORONEL BOGADO",
+      email: "subcria10ur2@gmail.com",
+      roles: ["JEFE", "SUB JEFE"]
+    },
+    "S11": {
+      nombre: "SUB COMISARÍA 11",
+      direccion: "ANDRADE 613, FIGHIERA",
+      email: "subcria11ur2@santafe.gov.ar",
+      roles: ["JEFE", "SUB JEFE"]
+    },
+    "S12": {
+      nombre: "SUB COMISARÍA 12",
+      direccion: "SAN MARTÍN 54, URANGA",
+      email: "subcria12ur2@santafe.gov.ar",
+      roles: ["JEFE", "SUB JEFE"]
+    }
+  };
+
+  const clasesColumnas = ['col-a', 'col-b', 'col-c', 'col-d', 'col-e'];
+  const opcionesCargo = ['', 'JEFE', 'SUB JEFE', '2DO SUB JEFE'];
+
+  function cargarDatos() {
+    const guardados = localStorage.getItem('datosJefes_v2');
+    if (guardados) {
+      const datos = JSON.parse(guardados);
+      if (datos.length > 0 && datos[0].length === 5) {
+        return datos;
+      }
+    }
+    return JSON.parse(JSON.stringify(datosIniciales));
+  }
+
+  function guardarDatos() {
+    const filas = document.querySelectorAll('#cuerpoTabla tr');
+    const datos = [];
+    filas.forEach(fila => {
+      const celdaNombre = fila.querySelector('td[contenteditable]');
+      const celdaCUIL = fila.querySelectorAll('td[contenteditable]')[1];
+      const celdaDep = fila.querySelectorAll('td[contenteditable]')[2];
+      const celdaTel = fila.querySelectorAll('td[contenteditable]')[3];
+      const selectCargo = fila.querySelector('.cargo-select');
+      
+      const filaDatos = [
+        celdaNombre ? celdaNombre.textContent : '',
+        celdaCUIL ? celdaCUIL.textContent : '',
+        celdaDep ? celdaDep.textContent : '',
+        celdaTel ? celdaTel.textContent : '',
+        selectCargo ? selectCargo.value : ''
+      ];
+      datos.push(filaDatos);
+    });
+    localStorage.setItem('datosJefes_v2', JSON.stringify(datos));
+    actualizarPanelLateral();
+  }
+
+  function renderizarTabla(datos) {
+    const cuerpo = document.getElementById('cuerpoTabla');
+    cuerpo.innerHTML = '';
+    datos.forEach((fila, i) => {
+      const tr = document.createElement('tr');
+      
+      const tdNum = document.createElement('td');
+      tdNum.className = 'row-number';
+      tdNum.textContent = i + 1;
+      tr.appendChild(tdNum);
+      
+      for (let j = 0; j < 4; j++) {
+        const td = document.createElement('td');
+        td.className = clasesColumnas[j];
+        td.contentEditable = 'true';
+        td.textContent = fila[j] || '';
+        td.addEventListener('input', guardarDatos);
+        tr.appendChild(td);
+      }
+      
+      const tdCargo = document.createElement('td');
+      tdCargo.className = clasesColumnas[4];
+      const select = document.createElement('select');
+      select.className = 'cargo-select';
+      opcionesCargo.forEach(opcion => {
+        const opt = document.createElement('option');
+        opt.value = opcion;
+        opt.textContent = opcion === '' ? '-- Seleccionar --' : opcion;
+        if (fila[4] === opcion) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.addEventListener('change', guardarDatos);
+      tdCargo.appendChild(select);
+      tr.appendChild(tdCargo);
+      
+      cuerpo.appendChild(tr);
+    });
+  }
+
+  function agregarFila() {
+    const cuerpo = document.getElementById('cuerpoTabla');
+    const numFilas = cuerpo.querySelectorAll('tr').length;
+    const tr = document.createElement('tr');
+    
+    const tdNum = document.createElement('td');
+    tdNum.className = 'row-number';
+    tdNum.textContent = numFilas + 1;
+    tr.appendChild(tdNum);
+    
+    for (let j = 0; j < 4; j++) {
+      const td = document.createElement('td');
+      td.className = clasesColumnas[j];
+      td.contentEditable = 'true';
+      td.textContent = '';
+      td.addEventListener('input', guardarDatos);
+      tr.appendChild(td);
+    }
+    
+    const tdCargo = document.createElement('td');
+    tdCargo.className = clasesColumnas[4];
+    const select = document.createElement('select');
+    select.className = 'cargo-select';
+    opcionesCargo.forEach(opcion => {
+      const opt = document.createElement('option');
+      opt.value = opcion;
+      opt.textContent = opcion === '' ? '-- Seleccionar --' : opcion;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', guardarDatos);
+    tdCargo.appendChild(select);
+    tr.appendChild(tdCargo);
+    
+    cuerpo.appendChild(tr);
+    guardarDatos();
+  }
+
+  function exportarCSV() {
+    const filas = document.querySelectorAll('#cuerpoTabla tr');
+    let csv = 'JEFES,CUIL,DEPENDENCIA,TELÉFONO,CARGO\n';
+    filas.forEach(fila => {
+      const celdas = fila.querySelectorAll('td[contenteditable]');
+      const select = fila.querySelector('.cargo-select');
+      const valores = Array.from(celdas).map(c => '"' + c.textContent.replace(/"/g, '""') + '"');
+      valores.push('"' + (select ? select.value : '') + '"');
+      csv += valores.join(',') + '\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'jefes.csv';
+    link.click();
+  }
+
+  function limpiarTodo() {
+    if (confirm('¿Seguro que quieres borrar todos los datos?')) {
+      localStorage.removeItem('datosJefes_v2');
+      renderizarTabla([]);
+      actualizarPanelLateral();
+    }
+  }
+
+  function resetearDatos() {
+    if (confirm('¿Resetear a los datos originales?')) {
+      localStorage.removeItem('datosJefes_v2');
+      renderizarTabla(JSON.parse(JSON.stringify(datosIniciales)));
+      actualizarPanelLateral();
+    }
+  }
+
+  function obtenerPersonaPorCargo(depCodigo, cargo) {
+    const datos = cargarDatos();
+    return datos.find(fila => 
+      fila[2] && 
+      fila[2].trim().toUpperCase() === depCodigo.toUpperCase() && 
+      fila[4] && 
+      fila[4].trim().toUpperCase() === cargo.toUpperCase()
+    );
+  }
+
+  function actualizarPanelLateral() {
+    const panel = document.getElementById('panelDependencias');
+    panel.innerHTML = '';
+
+    Object.keys(dependenciasInfo).forEach(depCodigo => {
+      const info = dependenciasInfo[depCodigo];
+
+      const card = document.createElement('div');
+      card.className = 'dependency-card';
+
+      const header = document.createElement('div');
+      header.className = 'card-header';
+      header.onclick = function() { toggleCard(this); };
+      header.innerHTML = `<span>✅ ${info.nombre}</span><span class="toggle">▼</span>`;
+
+      const body = document.createElement('div');
+      body.className = 'card-body';
+
+      const address = document.createElement('div');
+      address.className = 'card-address';
+      address.contentEditable = 'true';
+      address.textContent = '📍 ' + info.direccion;
+      address.addEventListener('input', function() {
+        dependenciasInfo[depCodigo].direccion = this.textContent.replace('📍 ', '');
+      });
+      body.appendChild(address);
+
+      const email = document.createElement('div');
+      email.className = 'card-email';
+      email.contentEditable = 'true';
+      email.textContent = '📧 ' + info.email;
+      email.addEventListener('input', function() {
+        dependenciasInfo[depCodigo].email = this.textContent.replace('📧 ', '');
+      });
+      body.appendChild(email);
+
+      info.roles.forEach(cargo => {
+        const persona = obtenerPersonaPorCargo(depCodigo, cargo);
+
+        const roleDiv = document.createElement('div');
+        roleDiv.className = 'card-role';
+
+        const strong = document.createElement('strong');
+        strong.textContent = cargo + ':';
+        roleDiv.appendChild(strong);
+
+        const nameField = document.createElement('span');
+        nameField.className = 'name-field';
+        nameField.contentEditable = 'true';
+        nameField.dataset.dep = depCodigo;
+        nameField.dataset.cargo = cargo;
+
+        if (persona) {
+          nameField.textContent = persona[0];
+        } else {
+          nameField.textContent = '';
+          nameField.classList.add('empty-role');
+        }
+
+        nameField.addEventListener('focus', function() {
+          this.classList.remove('empty-role');
+        });
+        nameField.addEventListener('blur', function() {
+          if (!this.textContent.trim()) {
+            this.classList.add('empty-role');
+          }
+        });
+        nameField.addEventListener('input', function() {
+          sincronizarDesdePanel(depCodigo, cargo, 'nombre', this.textContent);
+        });
+
+        roleDiv.appendChild(nameField);
+
+        const phone = document.createElement('span');
+        phone.className = 'card-phone';
+        phone.contentEditable = 'true';
+        phone.dataset.dep = depCodigo;
+        phone.dataset.cargo = cargo;
+
+        if (persona && persona[3]) {
+          phone.textContent = '📞 ' + persona[3];
+        } else {
+          phone.textContent = '📞 ';
+        }
+
+        phone.addEventListener('input', function() {
+          const tel = this.textContent.replace('📞 ', '').trim();
+          sincronizarDesdePanel(depCodigo, cargo, 'telefono', tel);
+        });
+
+        roleDiv.appendChild(phone);
+        body.appendChild(roleDiv);
+      });
+
+      card.appendChild(header);
+      card.appendChild(body);
+      panel.appendChild(card);
+    });
+  }
+
+  function sincronizarDesdePanel(depCodigo, cargo, campo, valor) {
+    const datos = cargarDatos();
+    const filaIndex = datos.findIndex(fila => 
+      fila[2] && 
+      fila[2].trim().toUpperCase() === depCodigo.toUpperCase() && 
+      fila[4] && 
+      fila[4].trim().toUpperCase() === cargo.toUpperCase()
+    );
+    
+    if (filaIndex !== -1) {
+      if (campo === 'nombre') {
+        datos[filaIndex][0] = valor;
+      } else if (campo === 'telefono') {
+        datos[filaIndex][3] = valor;
+      }
+      localStorage.setItem('datosJefes_v2', JSON.stringify(datos));
+      renderizarTabla(datos);
+    } else {
+      const nuevaFila = ['', '', depCodigo, '', cargo];
+      if (campo === 'nombre') {
+        nuevaFila[0] = valor;
+      } else if (campo === 'telefono') {
+        nuevaFila[3] = valor;
+      }
+      datos.push(nuevaFila);
+      localStorage.setItem('datosJefes_v2', JSON.stringify(datos));
+      renderizarTabla(datos);
+    }
+  }
+
+  function toggleCard(header) {
+    const body = header.nextElementSibling;
+    const toggle = header.querySelector('.toggle');
+    body.classList.toggle('collapsed');
+    header.classList.toggle('collapsed');
+  }
+
+  function copiarInformacion() {
+    let texto = '';
+    
+    Object.keys(dependenciasInfo).forEach(depCodigo => {
+      const info = dependenciasInfo[depCodigo];
+
+      texto += `✅${info.nombre} - ${info.direccion}\n`;
+      texto += `📧 ${info.email}\n\n`;
+
+      info.roles.forEach(cargo => {
+        const persona = obtenerPersonaPorCargo(depCodigo, cargo);
+        if (persona && persona[0]) {
+          texto += `${cargo}: ${persona[0]}\n`;
+          texto += `${persona[3] || ''}\n\n`;
+        }
+      });
+    });
+
+    navigator.clipboard.writeText(texto).then(() => {
+      mostrarNotificacion();
+    }).catch(err => {
+      const textarea = document.createElement('textarea');
+      textarea.value = texto;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        mostrarNotificacion();
+      } catch (e) {
+        alert('No se pudo copiar. Por favor copia manualmente.');
+      }
+      document.body.removeChild(textarea);
+    });
+  }
+
+  function mostrarNotificacion() {
+    const notif = document.getElementById('notification');
+    notif.classList.add('show');
+    setTimeout(() => {
+      notif.classList.remove('show');
+    }, 2000);
+  }
+
+  renderizarTabla(cargarDatos());
+  actualizarPanelLateral();
+</script>
+
+</body>
+</html>
