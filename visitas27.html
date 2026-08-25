@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generador de Servicio - Visitas Comisaría 27</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#17202a}
+.container{max-width:1150px;margin:auto;padding:20px}.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 5px 20px #0001}
+h1{margin:0 0 8px;font-size:25px}h2{font-size:18px;margin:0 0 14px}.sub{color:#65717d}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{font-weight:700;font-size:13px;display:block;margin-bottom:6px}input,select,textarea{width:100%;padding:10px;border:1px solid #cbd3da;border-radius:9px;font-size:14px}
+textarea{min-height:70px;resize:vertical}.buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+button{border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer;background:#263746;color:white}
+button.secondary{background:#66727d}button.danger{background:#a92d2d}button.success{background:#18794e}
+table{width:100%;border-collapse:collapse}th,td{padding:11px 9px;border-bottom:1px solid #e2e6e9;text-align:left;vertical-align:middle}th{background:#f5f7f9}
+.badge{display:inline-block;padding:5px 8px;border-radius:20px;background:#e9eef3;font-weight:700;font-size:12px}.notice{padding:12px;border-radius:10px;background:#f6f8fa;border-left:4px solid #263746;margin-top:12px}
+.small{font-size:12px;color:#68747e}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{padding:7px 9px;font-size:12px}
+#output{display:none}.print-header{display:none}
+@media(max-width:700px){.container{padding:10px}table{font-size:13px;display:block;overflow:auto}.card{padding:14px}}
+@media print{
+body{background:#fff}.container{max-width:none;padding:0}.no-print{display:none!important}.card{box-shadow:none;border:0;padding:0;margin:0 0 12px}
+#printArea{display:block!important}.print-header{display:block}.print-title{font-size:18px;font-weight:bold;text-align:center}.print-meta{text-align:center;font-size:12px;margin:5px 0 12px}
+table{font-size:11px}th,td{padding:6px;border:1px solid #555}.notice{border:1px solid #555;background:#fff}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="card no-print">
+<h1>🚨 Generador de Servicio — Comisaría 27</h1>
+<div class="sub">Refuerzo por activación de visitas para detenidos · Arroyo Seco</div>
+</div>
+
+<div class="card no-print">
+<h2>Configuración del servicio</h2>
+<div class="grid">
+<div><label>Desde</label><input id="desde" type="date" value="2026-08-11"></div>
+<div><label>Hasta</label><input id="hasta" type="date" value="2026-09-01"></div>
+<div><label>Día de servicio</label><select id="dia"><option value="2">Martes</option></select></div>
+<div><label>Efectivos por martes</label><input id="cantidad" type="number" min="1" max="5" value="2"></div>
+</div>
+
+<div class="grid" style="margin-top:12px">
+<div><label>Presentación Comisaría 27</label><input id="presentacion" value="12:30 hs"></div>
+<div><label>Paquetes</label><input id="paquetes" value="13:00 hs"></div>
+<div><label>Ingreso</label><input id="ingreso" value="15:00 hs"></div>
+<div><label>Salida</label><input id="salida" value="18:00 hs"></div>
+<div><label>Finalización</label><input id="finalizacion" value="18:30 hs"></div>
+</div>
+
+<div style="margin-top:12px">
+<label>Motivo</label>
+<input id="motivo" value="ACTIVACIÓN VISITAS PARA LOS DETENIDOS">
+</div>
+<div style="margin-top:12px">
+<label>Modalidad de ingreso</label>
+<input id="modalidad" value="SOLO FEMENINOS MAYORES">
+</div>
+<div style="margin-top:12px">
+<label>A cargo</label>
+<input id="acargo" value="SUPERIOR DE COMISARIA 27">
+</div>
+
+<div class="notice">
+<strong>Dependencias:</strong> Sub Cría 7 · Sub Cría 9 · Sub Cría 10 · Sub Cría 11 · Sub Cría 12.
+<br><span class="small">La rotación busca distribuir los turnos y evitar repetir innecesariamente la misma dependencia en fechas consecutivas.</span>
+</div>
+
+<div class="buttons">
+<button class="success" onclick="generar()">🔄 Generar rotación</button>
+<button onclick="copiarServicio()">📋 Copiar servicio</button>
+<button onclick="guardar()">💾 Guardar</button>
+<button class="secondary" onclick="cargar()">📂 Cargar guardado</button>
+<button class="secondary" onclick="window.print()">🖨️ Imprimir / PDF</button>
+<button class="danger" onclick="limpiar()">🗑️ Limpiar</button>
+</div>
+</div>
+
+<div class="card no-print">
+<h2>Rotación inicial cargada</h2>
+<div class="small">Estas asignaciones son las que proporcionaste y se utilizan como punto de partida.</div>
+<table style="margin-top:10px">
+<thead><tr><th>Fecha</th><th>Dependencia 1</th><th>Dependencia 2</th></tr></thead>
+<tbody>
+<tr><td>11/08/2026</td><td>Sub Cría 11</td><td>Sub Cría 12</td></tr>
+<tr><td>18/08/2026</td><td>Sub Cría 9</td><td>Sub Cría 7</td></tr>
+<tr><td>25/08/2026</td><td>Sub Cría 10</td><td>Sub Cría 11</td></tr>
+<tr><td>01/09/2026</td><td>Sub Cría 9</td><td>Sub Cría 12</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="printArea">
+<div class="print-header">
+<div class="print-title">SERVICIO REFUERZO — COMISARÍA 27 ARROYO SECO</div>
+<div class="print-meta" id="printMeta"></div>
+</div>
+
+<div class="card" id="resultadoCard" style="display:none">
+<h2 class="no-print">📋 Servicio generado</h2>
+<div id="resumen"></div>
+<table id="tabla">
+<thead><tr><th>Fecha</th><th>Día</th><th>Efectivo / Dependencia</th><th>Horario</th><th>Acciones</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+
+<div class="card no-print">
+<h2>ℹ️ Datos del servicio</h2>
+<div class="notice">
+<strong>🚨 SERVICIO REFUERZO COMISARIA 27 ARROYO SECO</strong><br>
+<strong>Motivo:</strong> Activación visitas para los detenidos.<br><br>
+<strong>🚨 Días martes — Recepción</strong><br>
+Presentación Cria. 27: <span id="vistaPresentacion">12:30 hs</span><br>
+Paquetes: <span id="vistaPaquetes">13:00 hs</span><br>
+Ingreso: <span id="vistaIngreso">15:00 hs</span><br>
+Salida: <span id="vistaSalida">18:00 hs</span><br>
+Finalización: <span id="vistaFinalizacion">18:30 hs</span><br><br>
+<strong>🚨 Modalidad:</strong> Solo femeninos mayores.<br>
+<strong>🚨 A cargo:</strong> <span id="vistaAcargo">SUPERIOR DE COMISARIA 27</span>.
+</div>
+</div>
+
+</div>
+
+<script>
+const deps=["SUB CRIA 7","SUB CRIA 9","SUB CRIA 10","SUB CRIA 11","SUB CRIA 12"];
+
+const iniciales={
+"2026-08-11":["SUB CRIA 11","SUB CRIA 12"],
+"2026-08-18":["SUB CRIA 9","SUB CRIA 7"],
+"2026-08-25":["SUB CRIA 10","SUB CRIA 11"],
+"2026-09-01":["SUB CRIA 9","SUB CRIA 12"]
+};
+
+let servicios=[];
+
+function fechaLocal(s){return new Date(s+"T12:00:00")}
+function iso(d){return d.toISOString().slice(0,10)}
+function fmt(d){return d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"})}
+function diaNombre(d){return d.toLocaleDateString("es-AR",{weekday:"long"})}
+
+function actualizarVista(){
+["Presentacion","Paquetes","Ingreso","Salida","Finalizacion","Acargo"].forEach(x=>{
+let id=x.toLowerCase();
+let el=document.getElementById("vista"+x);
+if(el) el.textContent=document.getElementById(id).value;
+});
+}
+
+["presentacion","paquetes","ingreso","salida","finalizacion","acargo"].forEach(id=>{
+document.getElementById(id).addEventListener("input",actualizarVista);
+});
+
+function obtenerMartes(desde,hasta){
+let d=fechaLocal(desde), fin=fechaLocal(hasta), arr=[];
+while(d<=fin){
+if(d.getDay()===2) arr.push(new Date(d));
+d.setDate(d.getDate()+1);
+}
+return arr;
+}
+
+/* Generador equilibrado:
+   - conserva las asignaciones iniciales suministradas;
+   - para nuevas fechas elige las dependencias con menor cantidad de usos;
+   - penaliza repetir una dependencia respecto de la fecha anterior.
+*/
+function elegirParaFecha(fecha,index,usos,prev){
+let fija=iniciales[iso(fecha)];
+if(fija) return fija.slice(0,Number(document.getElementById("cantidad").value));
+
+let cantidad=Math.min(5,Math.max(1,Number(document.getElementById("cantidad").value)));
+let seleccion=[];
+let disponibles=deps.slice();
+
+for(let n=0;n<cantidad;n++){
+let orden=disponibles.sort((a,b)=>{
+let ua=usos[a]||0, ub=usos[b]||0;
+if(ua!==ub)return ua-ub;
+let pa=prev.includes(a)?1:0, pb=prev.includes(b)?1:0;
+if(pa!==pb)return pa-pb;
+return a.localeCompare(b);
+});
+let elegido=orden[0];
+seleccion.push(elegido);
+disponibles=disponibles.filter(x=>x!==elegido);
+}
+return seleccion;
+}
+
+function generar(){
+actualizarVista();
+let desde=document.getElementById("desde").value;
+let hasta=document.getElementById("hasta").value;
+if(!desde||!hasta||desde>hasta){alert("Revisá las fechas.");return}
+
+let fechas=obtenerMartes(desde,hasta);
+let usos={}; deps.forEach(x=>usos[x]=0);
+let prev=[];
+servicios=[];
+
+fechas.forEach((d,i)=>{
+let asignados=elegirParaFecha(d,i,usos,prev);
+asignados.forEach(x=>usos[x]=(usos[x]||0)+1);
+servicios.push({fecha:iso(d),deps:asignados});
+prev=asignados;
+});
+
+render();
+}
+
+function render(){
+let tbody=document.querySelector("#tabla tbody");
+tbody.innerHTML="";
+servicios.forEach((s,i)=>{
+let tr=document.createElement("tr");
+let horario=`Presentación ${document.getElementById("presentacion").value} · Paquetes ${document.getElementById("paquetes").value} · Ingreso ${document.getElementById("ingreso").value} · Salida ${document.getElementById("salida").value} · Fin ${document.getElementById("finalizacion").value}`;
+tr.innerHTML=`
+<td>${fmt(fechaLocal(s.fecha))}</td>
+<td style="text-transform:capitalize">${diaNombre(fechaLocal(s.fecha))}</td>
+<td>${s.deps.map((d,j)=>`<div class="badge">${d}</div>`).join(" ")}</td>
+<td class="small">${horario}</td>
+<td class="actions no-print">
+<button onclick="editar(${i})">✏️ Editar</button>
+<button class="danger" onclick="eliminar(${i})">×</button>
+</td>`;
+tbody.appendChild(tr);
+});
+document.getElementById("resultadoCard").style.display="block";
+document.getElementById("resumen").innerHTML=
+`<div class="notice"><strong>Motivo:</strong> ${esc(document.getElementById("motivo").value)} · <strong>Modalidad:</strong> ${esc(document.getElementById("modalidad").value)} · <strong>A cargo:</strong> ${esc(document.getElementById("acargo").value)}</div>`;
+document.getElementById("printMeta").textContent=
+`${document.getElementById("motivo").value} · ${document.getElementById("modalidad").value} · ${document.getElementById("acargo").value}`;
+}
+
+function editar(i){
+let s=servicios[i];
+let texto=prompt("Ingresá las dependencias separadas por coma.\nEj.: SUB CRIA 7, SUB CRIA 10",s.deps.join(", "));
+if(texto===null)return;
+let vals=texto.split(",").map(x=>x.trim().toUpperCase()).filter(Boolean);
+if(!vals.length||vals.some(x=>!deps.includes(x))){alert("Usá solamente: "+deps.join(", "));return}
+servicios[i].deps=[...new Set(vals)];
+render();
+}
+
+function eliminar(i){
+if(confirm("¿Eliminar este servicio?")){servicios.splice(i,1);render();}
+}
+
+function guardar(){
+if(!servicios.length){alert("Primero generá la rotación.");return}
+let datos={
+config:{
+desde:desde.value,hasta:hasta.value,cantidad:cantidad.value,presentacion:presentacion.value,
+paquetes:paquetes.value,ingreso:ingreso.value,salida:salida.value,finalizacion:finalizacion.value,
+motivo:motivo.value,modalidad:modalidad.value,acargo:acargo.value
+},servicios};
+localStorage.setItem("servicioComisaria27",JSON.stringify(datos));
+alert("Servicio guardado en este navegador.");
+}
+
+function cargar(){
+let raw=localStorage.getItem("servicioComisaria27");
+if(!raw){alert("No hay un servicio guardado.");return}
+let d=JSON.parse(raw), c=d.config;
+Object.keys(c).forEach(k=>{let el=document.getElementById(k);if(el)el.value=c[k]});
+servicios=d.servicios||[];
+actualizarVista();render();
+alert("Servicio cargado.");
+}
+
+function limpiar(){
+if(!confirm("¿Borrar el servicio generado y el guardado local?"))return;
+servicios=[];localStorage.removeItem("servicioComisaria27");
+document.getElementById("resultadoCard").style.display="none";
+}
+
+function copiarServicio(){
+if(!servicios.length){alert("Primero generá el servicio.");return}
+let lineas=[];
+lineas.push("🚨🚨🚨 SERVICIO REFUERZO COMISARIA 27 ARROYO SECO");
+lineas.push("MOTIVO: "+document.getElementById("motivo").value);
+lineas.push("");
+lineas.push("🚨🚨 DÍAS MARTES");
+lineas.push("RECEPCIÓN");
+lineas.push("");
+lineas.push("Presentación Cria. 27: "+document.getElementById("presentacion").value);
+lineas.push("PAQUETES: "+document.getElementById("paquetes").value);
+lineas.push("INGRESO: "+document.getElementById("ingreso").value);
+lineas.push("SALIDA: "+document.getElementById("salida").value);
+lineas.push("");
+lineas.push("Finalización servicio: "+document.getElementById("finalizacion").value);
+lineas.push("");
+lineas.push("🚨🚨🚨 MODALIDAD DE INGRESO");
+lineas.push(document.getElementById("modalidad").value+".");
+lineas.push("");
+lineas.push("🚨🚨 A CARGO");
+lineas.push(document.getElementById("acargo").value+" ...");
+lineas.push("");
+lineas.push("PERSONAL AFECTADO:");
+lineas.push("");
+
+servicios.forEach((s)=>{
+lineas.push("MARTES "+fmt(fechaLocal(s.fecha)));
+s.deps.forEach(d=>lineas.push("• "+d+": 01 efectivo (F/M)"));
+lineas.push("");
+});
+let texto=lineas.join("\n").trim();
+navigator.clipboard.writeText(texto).then(()=>{
+alert("✅ Servicio copiado. Ya podés pegarlo en WhatsApp.");
+}).catch(()=>{
+let ta=document.createElement("textarea");
+ta.value=texto;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();
+alert("✅ Servicio copiado. Ya podés pegarlo en WhatsApp.");
+});
+}
+
+function esc(v){
+return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+actualizarVista();
+generar();
+</script>
+</body>
+</html>
